@@ -54,10 +54,6 @@ public class Actions {
         return true;
     }
 
-    /*
-    TODO:
-        - Add sandbags condition
- */
     public static boolean shore() {
         Tile selectedTile = gp.getSelectedTile();
         Tile secondSelectedTile = gp.getSecondShoreTile();

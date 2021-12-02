@@ -150,10 +150,11 @@ public class Listeners {
     private static void cardUnSelect(CardButton card) {
         gp.updateActionLog("unselected " + card.getCard().toString());
 
-        if (gp.getSelectedAction() == Action.GIVE)
+        if (gp.isDiscardingCard()) {
+            gp.enablePlayerCards(gp.getGame().getCurrentPlayer());
+        } else if (gp.getSelectedAction() == Action.GIVE) {
             gp.enableTradeCards(gp.getGame().getCurrentPlayer());
-
-        if (gp.getSelectedAction() == Action.SPECIAL) {
+        } else if (gp.getSelectedAction() == Action.SPECIAL) {
             gp.enableSpecialCards();
             gp.removeIcons();
             gp.disableTiles();
@@ -219,6 +220,11 @@ public class Listeners {
             public void actionPerformed(ActionEvent e) {
                 switch (button.getName()) {
                     case "Confirm":
+                        if (gp.isDiscardingCard() && gp.getSelectedCard() == null) {
+                            gp.updateActionLogError("Select a card to discard!");
+                            break;
+                        }
+
                         gp.confirmAction();
                         break;
 

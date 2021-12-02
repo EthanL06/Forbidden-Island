@@ -7,6 +7,8 @@ import graphics.util.ImageScaler;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class HelpPanel extends JPanel {
 

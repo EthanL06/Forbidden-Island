@@ -78,7 +78,7 @@ public class GamePanel extends JPanel {
     private Tile secondShoreTile = null; // Specifically for Engineer
     private Tile landingTile = null; // Specifically for Helicopters Lift
     private boolean isGettingLandingSite = false; // Specifically for Helicopters Lift
-    private boolean discardingCard = false;
+    private boolean isDiscardingCard = false;
 
     private Player selectedPlayer = null;
     private Object selectedCard = null;
@@ -102,7 +102,8 @@ public class GamePanel extends JPanel {
 
     // Called when player clicks confirm button
     public void confirmAction() {
-        if (selectedAction == Action.NONE) {
+
+        if (!isDiscardingCard && selectedAction == Action.NONE) {
             updateActionLogError("Select an action first before confirming!");
             return;
         }
@@ -130,11 +131,32 @@ public class GamePanel extends JPanel {
                 break;
         }
 
+        if (isDiscardingCard) {
+            // make this its own method in ForbiddenIsland
+            // bug makes it so it discards adjacent cards
+            System.out.println("Discarding " + selectedCard);
+            currentPlayer.removeCard(selectedCard);
+            ArrayList<CardButton> playerCardButtons = playerCards.get(currentPlayer);
+
+            for (CardButton cardButton: playerCardButtons) {
+                if (cardButton.getCard().equals(selectedCard)) {
+                    game.getTreasureDeck().addToDiscard(selectedCard);
+                    playerCardButtons.remove(cardButton);
+                    break;
+                }
+            }
+
+            updateHands();
+        }
+
         reset();
 
         // if player used up all actions
         if (game.getActionsLeft() <= 0)
             nextTurn();
+
+        if (isDiscardingCard)
+            return;
 
         try {
             ImageIcon indicator = ImageCreate.get("/images/misc/actions/actions_" + game.getActionsLeft() + ".png");
@@ -159,7 +181,7 @@ public class GamePanel extends JPanel {
         secondShoreTile = null;
         selectedPlayer = null;
         selectedCard = null;
-        discardingCard = false;
+        isDiscardingCard = false;
         setGettingLandingSite(false);
         selectedAction = Action.NONE;
     }
@@ -420,7 +442,11 @@ public class GamePanel extends JPanel {
         selectedTile = null;
         selectedAction = Action.NONE;
 
-        game.nextPlayerTurn();
+        // false if player is discarding excess cards
+        if (!game.nextPlayerTurn()) {
+            return;
+        }
+
         updateHands();
         updateDiscard();
 
@@ -445,7 +471,11 @@ public class GamePanel extends JPanel {
     }
 
     public void discardExcessCard() {
-        updateActionLog("'s hand exceeded card limit. Select a card to discard.");
+        updateActionLogCustom(game.getCurrentPlayer().getName() +  "'s hand exceeded card limit. Select a card to discard");
+
+        disableActionButtons();
+        disableTiles();
+        enablePlayerCards(game.getCurrentPlayer());
     }
 
     public void updateActionLog() {
@@ -566,6 +596,17 @@ public class GamePanel extends JPanel {
         }
     }
 
+    public void disableActionButtons() {
+        for (JButton button : actionButtons.values()) {
+            String name = button.getName();
+
+            if (name.equals("Confirm") || name.equals("Cancel") || name.equals("Help") || name.equals("End Turn"))
+                continue;
+
+            button.setEnabled(false);
+        }
+    }
+
     public void enableLandingTiles() {
         HashSet<Tile> tiles = new HashSet<>();
 
@@ -627,6 +668,13 @@ public class GamePanel extends JPanel {
         }
     }
 
+    public void enablePlayerCards(Player player) {
+        for (CardButton card : playerCards.get(player)) {
+            //System.out.println("Enabled " + card.getCard());
+            card.setEnabled(true);
+        }
+    }
+
     public void enableTradeCards(Player player) {
         for (CardButton card : playerCards.get(player)) {
             String cardClass = card.getCard().getClass().getSimpleName();
@@ -635,6 +683,8 @@ public class GamePanel extends JPanel {
                 card.setEnabled(true);
         }
     }
+
+
 
     public void enableSpecialCards() {
         for (ArrayList<CardButton> cardButtonList : playerCards.values()) {
@@ -1081,6 +1131,13 @@ public class GamePanel extends JPanel {
         isGettingLandingSite = gettingLandingSite;
     }
 
+    public boolean isDiscardingCard() {
+        return isDiscardingCard;
+    }
+
+    public void setDiscardingCard(boolean discardingCard) {
+        isDiscardingCard = discardingCard;
+    }
 
     public void setTilesAndPawns(HashMap<Tile, JButton> tileButtons, HashMap<Tile, JLayeredPane> panes, HashMap<JButton, Player> pawns) {
         this.tileButtons = tileButtons;

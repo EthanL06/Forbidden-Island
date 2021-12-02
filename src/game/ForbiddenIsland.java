@@ -11,6 +11,7 @@ import game.enums.*;
 import game.enums.Action;
 import graphics.panels.GamePanel;
 import graphics.panels.helper.CardButton;
+import graphics.panels.helper.Listeners;
 import graphics.util.ButtonFactory;
 import graphics.util.ImageScaler;
 
@@ -51,6 +52,7 @@ public class ForbiddenIsland implements Runnable {
 
     private GamePanel gamePanel;
     private int actionsLeft;
+    private int cardsDrawn;
 
     public ForbiddenIsland(int seed, int numOfPlayers, Difficulty difficulty) {
         System.err.println("Forbidden Island initialized.");
@@ -58,6 +60,7 @@ public class ForbiddenIsland implements Runnable {
         this.numOfPlayers = numOfPlayers;
         this.difficulty = difficulty;
         this.actionsLeft = 3;
+        this.cardsDrawn = 0;
     }
 
     @Override
@@ -369,11 +372,16 @@ public class ForbiddenIsland implements Runnable {
         }
     }
 
-    public void nextPlayerTurn() {
+    public boolean nextPlayerTurn() {
         gamePanel.updateActionLogError("");
 
-        if (!distributeTreasureCards())
-            System.err.println("LOST THE GAME!");
+        // false if player needs to discard excess cards
+        if (!distributeTreasureCards()) {
+            return false;
+        }
+
+        gamePanel.setDiscardingCard(false);
+        cardsDrawn = 0;
 
         drawFloodCards();
 
@@ -388,6 +396,8 @@ public class ForbiddenIsland implements Runnable {
             currentPlayerIndex++;
 
         currentPlayer = players[currentPlayerIndex];
+
+        return true;
     }
 
 
@@ -401,8 +411,8 @@ public class ForbiddenIsland implements Runnable {
 
         boolean drawnWatersRise = false;
         // Draws two treasure cards
-        for (int i = 0; i < 2; i++) {
-
+        for (int i = cardsDrawn; i < 2; i++) {
+            cardsDrawn++;
             if (treasureDeck.isNextWatersRise()) {
                 gamePanel.updateActionLog("drew a Waters Rise! card");
 
@@ -416,8 +426,8 @@ public class ForbiddenIsland implements Runnable {
 
                 drawnWatersRise = true;
                 // Run lose condition here
-                if (waterLevel.hasReachedMax())
-                    return false;
+//                if (waterLevel.hasReachedMax())
+//                    return false;
 
             } else {
                 Object temp = treasureDeck.drawCard();
@@ -434,6 +444,8 @@ public class ForbiddenIsland implements Runnable {
                     cardButton = ButtonFactory.createCardButton(cardImage, cardImage, selectedImage);
                     cardButton.setCard(card);
                     cardButton.setBounds(0, 0, cardButton.getIcon().getIconWidth(), cardButton.getIcon().getIconHeight());
+                    cardButton.setEnabled(false);
+                    Listeners.setCardListener(cardButton);
                 } else {
                     SpecialCard card = (SpecialCard) temp;
 
@@ -443,6 +455,7 @@ public class ForbiddenIsland implements Runnable {
                     cardButton = ButtonFactory.createCardButton(cardImage, cardImage, selectedImage);
                     cardButton.setCard(card);
                     cardButton.setBounds(0, 0, cardButton.getIcon().getIconWidth(), cardButton.getIcon().getIconHeight());
+                    Listeners.setCardListener(cardButton);
                 }
 
                 gamePanel.getPlayerCards().get(currentPlayer).add(cardButton);
@@ -450,7 +463,9 @@ public class ForbiddenIsland implements Runnable {
 
                 // Run check if player's hand exceeds hand limit
                 if (currentPlayer.getHandSize() > 5){
+                    gamePanel.setDiscardingCard(true);
                     gamePanel.discardExcessCard();
+                    return false;
                 }
             }
         }
