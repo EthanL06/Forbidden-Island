@@ -33,7 +33,6 @@ public class FloodDeck implements Deck<FloodCard> {
 
         while (floodCardNames.hasNextLine()) {
             String name = floodCardNames.nextLine();
-            System.out.println(name);
             floodDeck.push(new FloodCard(name));
         }
     }

@@ -28,7 +28,7 @@ import java.util.HashSet;
 /*
     TODO:
         - Allow player to use Special Action card when discarding
-        - Run hand limit condition and allow player to discard cards
+        - Exception where player's current tile sinks
         - Run win and lose conditions
         - Complete HelpPanel and InputPanel
         -
@@ -72,6 +72,8 @@ public class GamePanel extends JPanel {
 
     // Action log
     private JTextArea actionLog;
+
+    private JButton endTurnButton;
 
     private Action selectedAction = Action.NONE;
     private Tile selectedTile = null;
@@ -132,21 +134,24 @@ public class GamePanel extends JPanel {
         }
 
         if (isDiscardingCard) {
-            // make this its own method in ForbiddenIsland
-            // bug makes it so it discards adjacent cards
             System.out.println("Discarding " + selectedCard);
             currentPlayer.removeCard(selectedCard);
             ArrayList<CardButton> playerCardButtons = playerCards.get(currentPlayer);
 
-            for (CardButton cardButton: playerCardButtons) {
+            for (CardButton cardButton : playerCardButtons) {
                 if (cardButton.getCard().equals(selectedCard)) {
                     game.getTreasureDeck().addToDiscard(selectedCard);
                     playerCardButtons.remove(cardButton);
+                    remove(cardButton);
                     break;
                 }
             }
 
+            isDiscardingCard = false;
+            System.out.println(game.getActionsLeft());
             updateHands();
+
+            nextTurn();
         }
 
         reset();
@@ -322,7 +327,7 @@ public class GamePanel extends JPanel {
     }
 
     public void updateDiscard() {
-        System.out.println(game.getTreasureDeck().size());
+        //System.out.println(game.getTreasureDeck().size());
 
         if (game.getTreasureDeck().discardSize() == 0) {
             treasureDiscardCard.setIcon(null);
@@ -431,24 +436,27 @@ public class GamePanel extends JPanel {
         nextTurn();
     }
 
-    /*
-    TODO:
-        - Sink islands
-        - Distribute treasure cards
-        - Check for excess treasure cards and discard
-        - Add to discard pile
-     */
     private void nextTurn() {
+        System.out.println("Called next turn");
+        System.out.println(isDiscardingCard);
         selectedTile = null;
         selectedAction = Action.NONE;
 
-        // false if player is discarding excess cards
-        if (!game.nextPlayerTurn()) {
-            return;
-        }
+        game.nextPlayerTurn();
 
         updateHands();
         updateDiscard();
+
+        System.out.println(isDiscardingCard);
+        if (isDiscardingCard) {
+            return;
+        }
+
+        // false if player is discarding excess cards
+//        if (!game.nextPlayerTurn()) {
+//            return;
+//        }
+
 
         currentPlayer = game.getCurrentPlayer();
 
@@ -471,9 +479,12 @@ public class GamePanel extends JPanel {
     }
 
     public void discardExcessCard() {
-        updateActionLogCustom(game.getCurrentPlayer().getName() +  "'s hand exceeded card limit. Select a card to discard");
+        System.out.println("Called discard excess cards!");
+        updateActionLogCustom(game.getCurrentPlayer().getName() + "'s hand exceeded card limit. Select a card to discard");
 
         disableActionButtons();
+        endTurnButton.setEnabled(false);
+
         disableTiles();
         enablePlayerCards(game.getCurrentPlayer());
     }
@@ -579,6 +590,8 @@ public class GamePanel extends JPanel {
             button.setSelected(false);
             button.setEnabled(true);
         }
+
+        endTurnButton.setEnabled(true);
     }
 
     // Disables all other buttons when an action button is selected excluding confirm, cancel, help, and end turn
@@ -683,7 +696,6 @@ public class GamePanel extends JPanel {
                 card.setEnabled(true);
         }
     }
-
 
 
     public void enableSpecialCards() {
@@ -985,7 +997,7 @@ public class GamePanel extends JPanel {
     private void removeAllShoreIcons() {
         HashSet<Tile> shoreTiles = game.getBoard().getAvailableShoreTiles(currentPlayer, true);
 
-        for (Tile tile: shoreTiles) {
+        for (Tile tile : shoreTiles) {
             JLayeredPane layeredPane = layeredPanes.get(tile);
             removeComponent(layeredPane, "Shore");
         }
@@ -1139,6 +1151,10 @@ public class GamePanel extends JPanel {
         isDiscardingCard = discardingCard;
     }
 
+    public void setEndTurnButton(JButton button) {
+        endTurnButton = button;
+    }
+
     public void setTilesAndPawns(HashMap<Tile, JButton> tileButtons, HashMap<Tile, JLayeredPane> panes, HashMap<JButton, Player> pawns) {
         this.tileButtons = tileButtons;
         layeredPanes = panes;
@@ -1203,3 +1219,4 @@ public class GamePanel extends JPanel {
         }
     }
 }
+

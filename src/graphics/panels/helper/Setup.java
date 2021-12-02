@@ -326,10 +326,8 @@ public class Setup {
         actionButtons.put("End Turn", endTurnBtn);
         gp.add(endTurnBtn);
 
-
-
-
         gp.setAction(actionButtons, actionIndicator);
+        gp.setEndTurnButton(endTurnBtn);
     }
 
     private static void setDecks() {
