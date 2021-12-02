@@ -45,7 +45,11 @@ public class Listeners {
         gp.updateActionLog("selected " + tile.getName());
 
         if (!gp.isGettingLandingSite()) {
-            gp.setSelectedTile(gp.getGame().getBoard().getTile(tile.getName()));
+            if (gp.getGame().getCurrentPlayer().getRole() == Role.ENGINEER && gp.getSelectedTile() != null) {
+                gp.setSecondShoreTile(gp.getGame().getBoard().getTile(tile.getName()));
+            } else{
+                gp.setSelectedTile(gp.getGame().getBoard().getTile(tile.getName()));
+            }
         } else {
             gp.setLandingTile(gp.getGame().getBoard().getTile(tile.getName()));
         }
@@ -56,10 +60,15 @@ public class Listeners {
     private static void tileUnSelect(JButton tile) {
         gp.updateActionLog("unselected " + tile.getName());
 
-        if (!gp.isGettingLandingSite())
-            gp.setSelectedTile(null);
-        else
+        if (!gp.isGettingLandingSite()) {
+            if (gp.getGame().getBoard().getTile(tile.getName()).equals(gp.getSelectedTile()))
+                gp.setSelectedTile(null);
+            else
+                gp.setSecondShoreTile(null);
+
+        } else {
             gp.setLandingTile(null);
+        }
 
         gp.showIcons();
     }

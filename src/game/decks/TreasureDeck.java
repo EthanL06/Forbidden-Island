@@ -83,6 +83,10 @@ public class TreasureDeck implements Deck<Object> {
         return discard.peek();
     }
 
+    public int discardSize() {
+        return discard.size();
+    }
+
     @Override
     public Stack shuffle() {
         Collections.shuffle(treasureDeck, Randomizer.getRandom());

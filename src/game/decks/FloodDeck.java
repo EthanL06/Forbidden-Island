@@ -58,6 +58,14 @@ public class FloodDeck implements Deck<FloodCard> {
         return discard.peek();
     }
 
+    public int discardSize() {
+        return discard.size();
+    }
+
+    public void removeFromDiscard(FloodCard card) {
+        discard.remove(card);
+    }
+
     public boolean isEmpty() {
         return floodDeck.isEmpty();
     }

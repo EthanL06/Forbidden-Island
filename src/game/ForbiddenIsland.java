@@ -8,9 +8,13 @@ import game.cards.TreasureCard;
 import game.decks.FloodDeck;
 import game.decks.TreasureDeck;
 import game.enums.*;
+import game.enums.Action;
 import graphics.panels.GamePanel;
 import graphics.panels.helper.CardButton;
+import graphics.util.ButtonFactory;
+import graphics.util.ImageScaler;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -256,36 +260,6 @@ public class ForbiddenIsland implements Runnable {
         System.err.println("\n=== END OF GAME LOOP ===");
     }*/
 
-/*    public boolean move(Player player, boolean movedByNavigator, Scanner input) {
-        HashSet<Tile> availableMoves = new HashSet<>();
-
-        if (movedByNavigator) {
-            availableMoves.addAll(board.getNavigatorMovementTiles(player));
-        } else {
-            availableMoves.addAll(board.getAvailableMovementTiles(player));
-        }
-
-        if (availableMoves.size() == 0) {
-            System.err.println("NO AVAILABLE TILES");
-            return false;
-        }
-
-        System.err.println("AVAILABLE MOVES: " + availableMoves);
-        String tileName = input.nextLine();
-
-        if (!availableMoves.contains(new Tile(tileName))) {
-            System.err.println("NOT AVAILABLE TILE");
-            return false;
-        }
-
-        if (!board.movePlayer(player, tileName)) {
-            System.err.println("NAMES ARE CASE SENSITIVE");
-            return false;
-        }
-
-        return true;
-    }*/
-
     public void move(Player player, Tile tile) {
         actionsLeft--;
         board.movePlayer(player, tile);
@@ -299,29 +273,7 @@ public class ForbiddenIsland implements Runnable {
         gamePanel.updateActionLogActionsLeft();
     }
 
-    // Special if user uses sandbags
     public void shore(Tile tile) {
-//        HashSet<Tile> availableShores;
-//        if (special) { // Sandbags can shore any flooded tile
-//            availableShores = board.getAllFloodedTiles();
-//        } else {
-//            availableShores = board.getAvailableShoreTiles(currentPlayer);
-//        }
-
-
-//        if (availableShores.size() == 0) {
-//            System.err.println("NO AVAILABLE SHORES");
-//            return false;
-//        }
-
-//        System.err.println("AVAILABLE SHORES: " + availableShores);
-//        String tileName = input.nextLine();
-//
-//        if (!availableShores.contains(new Tile(tileName))) {
-//            System.err.println("NOT AVAILABLE SHORE");
-//            return false;
-//        }
-
         actionsLeft--;
         board.shoreTile(tile);
         gamePanel.updateActionLog("shored " + tile);
@@ -334,57 +286,6 @@ public class ForbiddenIsland implements Runnable {
         gamePanel.updateActionLog("traded a " + card.toString() + " card with " + recipient.getName());
         gamePanel.updateActionLogActionsLeft();
     }
-
-//    private boolean give(Scanner input) {
-//        HashSet<Player> sameTilePlayers = board.getPlayersToTradeWith(currentPlayer);
-//        ArrayList<Object> playerHand = currentPlayer.getHand();
-//
-//        if (sameTilePlayers.size() == 0) {
-//            System.err.println("NO ONE TO TRADE WITH");
-//            return false;
-//        } else if (playerHand.size() == 0) {
-//            System.err.println("CAN'T TRADE - NO CARDS IN HAND");
-//            return false;
-//        }
-//
-//        System.err.println("AVAILABLE PLAYERS TO TRADE WITH: " + sameTilePlayers);
-//        System.err.println("ENTER IN PLAYER NUMBER TO TRADE WITH: ");
-//        int recipientNumber = input.nextInt(); // May change type later
-//        input.nextLine();
-//
-//        // Gets the player to trade with
-//        Player recipient = null;
-//        for (Player player : sameTilePlayers) {
-//            if (player.getNumber() == recipientNumber) {
-//                recipient = player;
-//            }
-//        }
-//
-//        if (recipient == null) {
-//            System.err.println("NOT AN AVAILABLE PLAYER TO TRADE WITH");
-//            return false;
-//        }
-//
-//        System.err.println("PLAYER HAND: " + playerHand);
-//        System.err.println("ENTER IN CARD INDEX TO GIVE (0-" + (playerHand.size() - 1) + "):");
-//        int cardToTrade = input.nextInt(); // May change type later
-//        input.nextLine();
-//
-//        if (cardToTrade < 0 || cardToTrade >= playerHand.size()) {
-//            System.err.println("NOT AN AVAILABLE INDEX");
-//            return false;
-//        }
-//
-//        Object card = currentPlayer.getCard(cardToTrade);
-//
-//        // If recipient's hand size exceeds card limit
-//        if (board.give(recipient, card) > 5)
-//            discardExcessCards(recipient, input);
-//
-//        System.err.println("TRADE SUCCESS");
-//        return true;
-
-//    }
 
     public boolean capture() {
 
@@ -468,129 +369,108 @@ public class ForbiddenIsland implements Runnable {
         }
     }
 
-//    public boolean special(Scanner input) {
-//        // Can use special cards from own hand or other players
-//        System.err.println("USE SPECIAL CARDS FROM OWN HAND? (Y/N):");
-//        String decision = input.nextLine();
-//
-//        ArrayList<Object> hand = new ArrayList<>();
-//        Player chosenPlayer = currentPlayer;
-//        if (decision.toLowerCase(Locale.ROOT).equals("y")) {
-//            hand = currentPlayer.getHand();
-//        } else {
-//            ArrayList<Player> otherPlayers = new ArrayList<>(Arrays.asList(players));
-//            otherPlayers.remove(currentPlayer);
-//
-//            System.err.println(otherPlayers);
-//            System.err.println("ENTER IN TEAMMATE'S NUMBER TO USE SPECIAL CARDS: ");
-//            int playerNumber = input.nextInt();
-//            input.nextLine();
-//
-//            boolean flag = false;
-//            for (Player player: otherPlayers) {
-//                if (player.getNumber() == playerNumber) {
-//                    hand = player.getHand();
-//                    chosenPlayer = player;
-//                    flag = true;
-//                    break;
-//                }
-//            }
-//
-//            if (!flag) {
-//                System.err.println("INVALID PLAYER NUMBER");
-//                return false;
-//            }
-//        }
-//
-//        ArrayList<SpecialCard> specialCards = new ArrayList<>();
-//
-//        for (Object card : hand) {
-//            if (card.getClass().getSimpleName().equals("SpecialCard")) {
-//                specialCards.add((SpecialCard) card);
-//            }
-//        }
-//
-//        if (specialCards.size() == 0) {
-//            System.err.println("PLAYER DOES NOT HAVE ANY SPECIAL ACTION CARDS");
-//            return false;
-//        }
-//
-//        System.err.println(specialCards);
-//        System.err.println("ENTER IN SPECIAL ACTION CARD INDEX: ");
-//
-//        int index = input.nextInt();
-//        input.nextLine();
-//
-//        if (index < 0 || index >= specialCards.size()) {
-//            System.err.println("NOT VALID INDEX");
-//            return false;
-//        }
-//
-//        SpecialCard card = specialCards.get(index);
-//
-//        if (card.getType() == Special.SANDBAGS) {
-//            System.err.println("PLAYED SAND BAGS");
-///*            if (!shore(input, true))
-//                return false;*/
-//
-//        } else {
-//            if (!playHelicopterLift(input))
-//                return false;
-//        }
-//
-//        chosenPlayer.removeCard(card);
-//        treasureDeck.addToDiscard(card);
-//        return true;
-//    }
+    public void nextPlayerTurn() {
+        gamePanel.updateActionLogError("");
 
-//    private boolean distributeTreasureCards(Scanner input) {
-//        // if there's only one treasure card, it will cause ArrayOutOfBounds
-//        if (treasureDeck.isEmpty() || treasureDeck.size() == 1) {
-//            System.err.println("TREASURE DISCARD PILE SWITCHED TO DRAW PILE");
-//            treasureDeck.switchDeckToDiscard();
-//        }
-//
-//        boolean drawnWatersRise = false;
-//        // Draws two treasure cards
-//        for (int i = 0; i < 2; i++) {
-//            if (treasureDeck.isNextWatersRise()) {
-//                System.err.println("PLAYER " + currentPlayer.getNumber() + " DREW WATERS RISE");
-//
-//                treasureDeck.drawCard(); // Draws card and adds it to discard pile - not given to player
-//                waterLevel.increaseWaterMarker();
-//
-//                drawnWatersRise = true;
-//                // Run lose condition here
-//                if (waterLevel.hasReachedMax())
-//                    return false;
-//
-//            } else {
-//                Object card = treasureDeck.drawCard();
-//                System.err.println("PLAYER " + currentPlayer.getNumber() + " DREW " + card);
-//                currentPlayer.addCard(card);
-//
-//                // Run check if player's hand exceeds hand limit
-//                if (currentPlayer.getHandSize() > 5)
-//                    discardExcessCards(currentPlayer, input);
-//            }
-//        }
-//
-//        if (drawnWatersRise) {
-//            // Shuffle Flood discard pile
-//            // Place discard pile on top of Flood draw pile
-//            floodDeck.shuffleDiscard();
-//            floodDeck.placeDiscardOnDeck();
-//        }
-//
-//        System.err.println();
-//
-//        return true;
-//    }
+        if (!distributeTreasureCards())
+            System.err.println("LOST THE GAME!");
+
+        drawFloodCards();
+
+        if (hasLost())
+            System.err.println("LOST THE GAME!");
+
+        actionsLeft = 3;
+
+        if (currentPlayerIndex == players.length - 1)
+            currentPlayerIndex = 0;
+        else
+            currentPlayerIndex++;
+
+        currentPlayer = players[currentPlayerIndex];
+    }
+
+
+    private boolean distributeTreasureCards() {
+        // if there's only one treasure card, it will cause ArrayOutOfBounds
+
+        if (treasureDeck.isEmpty() || treasureDeck.size() <= 1) {
+            gamePanel.updateActionLogCustom("Treasure draw pile is empty. Using shuffled treasure discard pile as new treasure draw pile.");
+            treasureDeck.switchDeckToDiscard();
+        }
+
+        boolean drawnWatersRise = false;
+        // Draws two treasure cards
+        for (int i = 0; i < 2; i++) {
+
+            if (treasureDeck.isNextWatersRise()) {
+                gamePanel.updateActionLog("drew a Waters Rise! card");
+
+                Object card = treasureDeck.drawCard(); // Draws card and adds it to discard pile - not given to player
+
+                treasureDeck.addToDiscard(card);
+                waterLevel.increaseWaterMarker();
+                gamePanel.updateActionLogCustom("Water level is currently at " + waterLevel.getWaterLevel());
+
+                gamePanel.updateWaterLevel();
+
+                drawnWatersRise = true;
+                // Run lose condition here
+                if (waterLevel.hasReachedMax())
+                    return false;
+
+            } else {
+                Object temp = treasureDeck.drawCard();
+                currentPlayer.addCard(temp);
+                gamePanel.updateActionLog("drew a " + temp + " card");
+
+                CardButton cardButton;
+
+                if (temp.getClass().getSimpleName().equals("TreasureCard")) {
+                    TreasureCard card = (TreasureCard) temp;
+                    ImageIcon cardImage = ImageScaler.scale(card.getImage(), 72, 102);
+                    ImageIcon selectedImage = ImageScaler.scale(card.getSelectedImage(), 72, 102);
+
+                    cardButton = ButtonFactory.createCardButton(cardImage, cardImage, selectedImage);
+                    cardButton.setCard(card);
+                    cardButton.setBounds(0, 0, cardButton.getIcon().getIconWidth(), cardButton.getIcon().getIconHeight());
+                } else {
+                    SpecialCard card = (SpecialCard) temp;
+
+                    ImageIcon cardImage = ImageScaler.scale(card.getImage(), 72, 102);
+                    ImageIcon selectedImage = ImageScaler.scale(card.getSelectedImage(), 72, 102);
+
+                    cardButton = ButtonFactory.createCardButton(cardImage, cardImage, selectedImage);
+                    cardButton.setCard(card);
+                    cardButton.setBounds(0, 0, cardButton.getIcon().getIconWidth(), cardButton.getIcon().getIconHeight());
+                }
+
+                gamePanel.getPlayerCards().get(currentPlayer).add(cardButton);
+                gamePanel.updateHands();
+
+                // Run check if player's hand exceeds hand limit
+                if (currentPlayer.getHandSize() > 5){
+                    gamePanel.discardExcessCard();
+                }
+            }
+        }
+
+        if (drawnWatersRise) {
+            // Shuffle Flood discard pile
+            // Place discard pile on top of Flood draw pile
+            gamePanel.updateActionLog("drew a Waters Rise! card. Flood discard pile is shuffled\nand placed on top of draw flood draw pile");
+            floodDeck.shuffleDiscard();
+            floodDeck.placeDiscardOnDeck();
+        }
+
+        return true;
+    }
+
 
     private void drawFloodCards() {
         // ArrayOutOfBounds if flood deck's size is less than the amount of flood cards to draw
         if (floodDeck.isEmpty() || floodDeck.size() < waterLevel.getWaterLevel()) {
-            System.err.println("FLOOD DISCARD PILE SWITCHED TO DRAW PILE");
+            gamePanel.updateActionLogError("Flood draw pile is empty. Using shuffled flood discard pile as new draw pile.");
             floodDeck.shuffleDiscard();
             floodDeck.switchDeckToDiscard();
         }
@@ -598,10 +478,14 @@ public class ForbiddenIsland implements Runnable {
         // Drawing of flood cards
         for (int i = 0; i < waterLevel.getWaterLevel(); i++) {
             FloodCard floodCard = floodDeck.drawCard();
-            board.floodTile(floodCard);
-        }
+            Tile tile = board.floodTile(floodCard, gamePanel);
+            gamePanel.updateActionLogCustom(tile.getName() + " has been flooded");
 
-        System.err.println();
+            if (tile.getState() == TileState.SUNK) {
+                floodDeck.removeFromDiscard(floodCard);
+                gamePanel.updateActionLogError(tile.getName() + " has sunk!");
+            }
+        }
     }
 
 //    private void discardExcessCards(Player player, Scanner input) {
@@ -638,71 +522,6 @@ public class ForbiddenIsland implements Runnable {
 //        }
 //    }
 
-//    private boolean playHelicopterLift(Scanner input) {
-//        // check if can lift off Fools' Landing and ask if player wants to
-//        // if not, play card like normally
-//        // add error handling
-//        System.err.println("PLAYED HELICOPTER LIFT");
-//
-//        if (isAbleToWin()) {
-//            System.err.println("ESCAPE FOOLS' LANDING (Y/N)?");
-//            String decision = input.nextLine();
-//            if (decision.equalsIgnoreCase("y")) {
-//                hasWon = true;      // WIN CONDITION
-//                return true;
-//            }
-//        }
-//
-//        HashMap<Tile, ArrayList<Player>> playerTiles = new HashMap<>();
-//
-//        // Getting each occupied tile and the players on them
-//        for (Player player: players) {
-//            Tile tile = player.getOccupiedTile();
-//            if (!playerTiles.containsKey(tile)) { // If player's tile hasnt been added to playerTiles yet
-//                ArrayList<Player> playerList = new ArrayList<>();
-//                playerList.add(player);
-//                playerTiles.put(tile, playerList);
-//            } else {
-//                playerTiles.get(player.getOccupiedTile()).add(player);
-//            }
-//        }
-//
-//        System.err.println("ENTER TILE NAME TO MOVE PLAYERS FROM:");
-//
-//        for (Tile key: playerTiles.keySet()) {
-//            System.err.println(key + ": " + playerTiles.get(key));
-//        }
-//
-//        String tileName = input.nextLine();
-//        if (!playerTiles.containsKey(new Tile(tileName))) {
-//            System.err.println("INVALID TILE");
-//            return false;
-//        }
-//
-//        ArrayList<Player> playersOfOriginalTile = playerTiles.get(new Tile(tileName));
-//
-//        HashSet<Tile> availableTiles = board.getAllNonSunkTiles();
-//        System.err.println("ENTER TILE NAME TO MOVE PLAYERS TO:");
-//        System.err.println(availableTiles);
-//        String newTileName = input.nextLine();
-//
-//        if (!availableTiles.contains(new Tile(newTileName))) {
-//            System.err.println("INVALID TILE");
-//            return false;
-//        }
-//
-//        // implement board.moveHelicopterLift
-//        if (!board.moveHelicopterLift(newTileName, playersOfOriginalTile)) {
-//            System.err.println("NAMES ARE CASE SENSITIVE");
-//            return false;
-//        }
-//
-//        System.err.println("MOVED " + playersOfOriginalTile + " FROM " + tileName + " TO " + newTileName);
-//        return true;
-//
-//        // ---run win condition after this method is called---
-//
-//    }
 
     // Runs all lose conditions
     private boolean hasLost() {
@@ -801,17 +620,6 @@ public class ForbiddenIsland implements Runnable {
 
     public int getActionsLeft() {
         return actionsLeft;
-    }
-
-    public void nextPlayerTurn() {
-        actionsLeft = 3;
-
-        if (currentPlayerIndex == players.length - 1)
-            currentPlayerIndex = 0;
-        else
-            currentPlayerIndex++;
-
-        currentPlayer = players[currentPlayerIndex];
     }
 
     public boolean decrementActionsLeft() {

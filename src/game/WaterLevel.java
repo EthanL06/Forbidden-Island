@@ -81,6 +81,31 @@ public class WaterLevel {
         return waterLevel;
     }
 
+    public int getHeight() {
+        switch (waterMarker) {
+            case 1:
+                return 389;
+            case 2:
+                return 353;
+            case 3:
+                return 317;
+            case 4:
+                return 281;
+            case 5:
+                return 245;
+            case 6:
+                return 209;
+            case 7:
+                return 173;
+            case 8:
+                return 145;
+            case 9:
+                return 110;
+            default:
+                return 77;
+        }
+    }
+
     public ImageIcon getImage() {
         return image;
     }

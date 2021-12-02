@@ -17,6 +17,7 @@ import graphics.util.ImageScaler;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
+import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -173,13 +174,18 @@ public class Setup {
         x += (850 + 203) - levelIcon.getIconWidth()/2;
 
         waterLevelIcon.setBounds(x, y, levelIcon.getIconWidth(), levelIcon.getIconHeight());
-        waterMarkerIcon.setBounds(x - markerIcon.getIconWidth() - 5, y + levelIcon.getIconHeight() - 85 - (36 * (waterLevel.getWaterMarker()-1)),
+        waterMarkerIcon.setBounds(x - markerIcon.getIconWidth() - 5, waterLevel.getHeight(),
                 markerIcon.getIconWidth(), markerIcon.getIconHeight());
+
+        System.out.println(waterMarkerIcon.getY());
+        System.out.println(waterLevelIcon.getHeight());
 
         gp.setWaterMeter(waterLevelIcon, waterMarkerIcon);
 
         gp.add(waterLevelIcon);
         gp.add(waterMarkerIcon);
+        gp.revalidate();
+        gp.repaint();
     }
 
     private static void setActionButtons() {
@@ -346,6 +352,10 @@ public class Setup {
         floodDiscard.setBounds(x + floodDiscard.getIcon().getIconWidth() + horizontalMargin, y, floodDiscard.getIcon().getIconWidth(), floodDiscard.getIcon().getIconHeight());
         gp.add(floodDiscard);
 
+        JLabel floodDiscardCard = new JLabel();
+        floodDiscardCard.setBounds(floodDiscard.getX() + 4, floodDiscard.getY() + 5, 105, 138);
+        gp.add(floodDiscardCard);
+
         treasureDeck = new JLabel(ImageCreate.get("/images/cards/treasure/treasure_deck_back.jpg"));
 
         x = initialX + boardSize/2 - horizontalMargin - treasureDeck.getIcon().getIconWidth();
@@ -356,7 +366,11 @@ public class Setup {
         treasureDiscard.setBounds(x - treasureDiscard.getIcon().getIconWidth() - horizontalMargin*2, y, treasureDiscard.getIcon().getIconWidth(), treasureDiscard.getIcon().getIconHeight());
         gp.add(treasureDiscard);
 
-        gp.setDecks(floodDeck, floodDiscard, treasureDeck, treasureDiscard);
+        JLabel treasureDiscardCard = new JLabel();
+        treasureDiscardCard.setBounds(treasureDiscard.getX() + 4, treasureDiscard.getY() + 5, 105, 138);
+        gp.add(treasureDiscardCard);
+
+        gp.setDecks(floodDeck, floodDiscard, treasureDeck, treasureDiscard, floodDiscardCard, treasureDiscardCard);
     }
 
     private static void setPlayerCards() {
@@ -461,7 +475,7 @@ public class Setup {
 
         JTextArea actionLog = new JTextArea();
         actionLog.setFont(new Font("Roboto", Font.BOLD, 15));
-        actionLog.setText("\tWelcome to Forbidden Island! Escape before the island floods!\n\tPress the ? icon for help.\n");
+        actionLog.setText("\tWelcome to Forbidden Island! Escape before the island sinks!\n\tPress the ? icon for help.");
         actionLog.setTabSize(1);
         actionLog.setEditable(false);
 

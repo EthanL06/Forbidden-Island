@@ -68,7 +68,7 @@ public class TitlePanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 System.out.println("Pressed play");
-                RootPanel.addPanel("loading", new LoadingPanel(20007, 4, Difficulty.ELITE)); // input here for debugging purposes
+                RootPanel.addPanel("loading", new LoadingPanel(20007, 4, Difficulty.NORMAL)); // input here for debugging purposes
                 RootPanel.switchPanel("loading");
             }
         });

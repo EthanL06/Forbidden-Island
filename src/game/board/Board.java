@@ -72,6 +72,19 @@ public class Board {
         }
     }
 
+    public Tile floodTile(FloodCard card, GamePanel gamePanel) {
+        if (tiles.containsKey(card.getName())) {
+            Tile tile = tiles.get(card.getName());
+            tile.flood();
+            gamePanel.updateTile(tile);
+
+            System.err.println("FLOODED " + tiles.get(card.getName()) + " (" + tiles.get(card.getName()).getState() + ")");
+            return tile;
+        }
+
+        return null;
+    }
+
     public void shoreTile(Tile tile) {
         tile.shore();
     }
@@ -96,6 +109,7 @@ public class Board {
         }
 
         Location location = tileLocations.get(newTile);
+        gp.updateActionLogError("");
 
         for (Player player: playersToMove) {
             JButton pawn = gp.removeAndGetPawn(player);
@@ -104,6 +118,8 @@ public class Board {
             playerLocations.replace(player, location);
 
             gp.updatePawn(player, pawn);
+
+            gp.updateActionLogCustom(player.getName() + " lifted from " + oldTile + " to " + newTile);
         }
     }
 
@@ -144,7 +160,6 @@ public class Board {
         }
 
         Location location = playerLocations.get(player);
-        //printBoardStatus(player);
 
         HashSet<Tile> availableTiles = new HashSet<>(getAdjacentFloodedTiles(location));
 

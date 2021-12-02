@@ -5,7 +5,9 @@ import game.Player;
 import game.WaterLevel;
 import game.board.Board;
 import game.board.Tile;
+import game.cards.FloodCard;
 import game.cards.SpecialCard;
+import game.cards.TreasureCard;
 import game.enums.*;
 import game.enums.Action;
 import graphics.Window;
@@ -22,28 +24,19 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Objects;
 
 /*
     TODO:
-        - Highlight pawn of the current player's turn *
-        - Complete special button, and help button (redirects to HelpPanel)
-        - Engineer exception for shore *
-        -
-        - Make discard piles work
-        - Allow players to look through discard piles
         - Allow player to use Special Action card when discarding
-        - Shuffle decks when run out of cards
-        -
-        - Distribute Treasure Cards and flood Island Tiles after every turn
-        - Increase water level and change water meter when draw Waters Rise!
-        -
+        - Run hand limit condition and allow player to discard cards
         - Run win and lose conditions
-        - Run hand limit condition
+        - Complete HelpPanel and InputPanel
         -
-        - Complete RulesPanel and InputPanel
-        -
+        - Highlight pawn of the current player's turn *
         - When click on role icon, information on what role does shows up
+        - Help button (redirects to HelpPanel)
+        -
+        - Allow players to look through discard piles?
  */
 
 public class GamePanel extends JPanel {
@@ -68,6 +61,9 @@ public class GamePanel extends JPanel {
     // Decks
     private JLabel floodDeck, treasureDeck, floodDiscard, treasureDiscard;
 
+    // Discard
+    private JLabel floodDiscardCard, treasureDiscardCard;
+
     // Player info
     private HashMap<Player, ArrayList<CardButton>> playerCards;
     private HashMap<JButton, Player> playerPawns;
@@ -79,8 +75,10 @@ public class GamePanel extends JPanel {
 
     private Action selectedAction = Action.NONE;
     private Tile selectedTile = null;
+    private Tile secondShoreTile = null; // Specifically for Engineer
     private Tile landingTile = null; // Specifically for Helicopters Lift
     private boolean isGettingLandingSite = false; // Specifically for Helicopters Lift
+    private boolean discardingCard = false;
 
     private Player selectedPlayer = null;
     private Object selectedCard = null;
@@ -151,14 +149,17 @@ public class GamePanel extends JPanel {
         disableCards();
         disableTiles();
         removeIcons();
+        removeAllShoreIcons();
         disablePawns();
 
         resetHelicoptersLift();
 
         selectedTile = null;
         landingTile = null;
+        secondShoreTile = null;
         selectedPlayer = null;
         selectedCard = null;
+        discardingCard = false;
         setGettingLandingSite(false);
         selectedAction = Action.NONE;
     }
@@ -298,6 +299,35 @@ public class GamePanel extends JPanel {
         }
     }
 
+    public void updateDiscard() {
+        System.out.println(game.getTreasureDeck().size());
+
+        if (game.getTreasureDeck().discardSize() == 0) {
+            treasureDiscardCard.setIcon(null);
+            treasureDiscardCard.setVisible(false);
+        } else {
+            Object treasureCard = game.getTreasureDeck().topOfDiscard();
+            ImageIcon treasureIcon;
+
+            if (treasureCard.getClass().getSimpleName().equals("TreasureCard"))
+                treasureIcon = ((TreasureCard) treasureCard).getImage();
+            else
+                treasureIcon = ((SpecialCard) treasureCard).getImage();
+
+            treasureDiscardCard.setIcon(ImageScaler.scale(treasureIcon, treasureDiscardCard.getWidth(), treasureDiscardCard.getHeight()));
+            treasureDiscardCard.setVisible(true);
+        }
+
+        if (game.getFloodDeck().discardSize() == 0) {
+            floodDiscardCard.setIcon(null);
+            floodDiscardCard.setVisible(false);
+        } else {
+            FloodCard floodCard = game.getFloodDeck().topOfDiscard();
+            floodDiscardCard.setIcon(ImageScaler.scale(floodCard.getImage(), floodDiscardCard.getWidth(), floodDiscardCard.getHeight()));
+            floodDiscardCard.setVisible(true);
+        }
+    }
+
     // Called whenever a player captures a Treasure and moves the figurine next to the player
     public void updateFigurine(Player player) {
         int x = 447;
@@ -364,6 +394,14 @@ public class GamePanel extends JPanel {
         }
     }
 
+    public void updateWaterLevel() {
+        int x = waterMarkerIcon.getX();
+        waterMarkerIcon.setBounds(x, waterLevel.getHeight(), waterMarkerIcon.getWidth(), waterMarkerIcon.getHeight());
+
+        revalidate();
+        repaint();
+    }
+
     public void endTurnPress() {
         updateActionLog("has ended their turn");
         reset();
@@ -383,6 +421,9 @@ public class GamePanel extends JPanel {
         selectedAction = Action.NONE;
 
         game.nextPlayerTurn();
+        updateHands();
+        updateDiscard();
+
         currentPlayer = game.getCurrentPlayer();
 
         ImageIcon indicator = null;
@@ -403,25 +444,34 @@ public class GamePanel extends JPanel {
         }
     }
 
+    public void discardExcessCard() {
+        updateActionLog("'s hand exceeded card limit. Select a card to discard.");
+    }
+
     public void updateActionLog() {
-        actionLog.append("\n\t" + currentPlayer.getName() + "'s turn.\n\n");
+        actionLog.append("\n\n\t" + currentPlayer.getName() + "'s turn.");
+        actionLog.getCaret().setDot(Integer.MAX_VALUE);
     }
 
     public void updateActionLogActionsLeft() {
         if (game.getActionsLeft() > 0)
-            actionLog.append("\n\t" + currentPlayer.getName() + " has (" + game.getActionsLeft() + "/3) actions left.\n\n");
+            actionLog.append("\n\n\t" + currentPlayer.getName() + " has (" + game.getActionsLeft() + "/3) actions left.");
+        actionLog.getCaret().setDot(Integer.MAX_VALUE);
     }
 
     public void updateActionLog(String msg) {
-        actionLog.append("\t" + currentPlayer.getName() + " " + msg + ".\n");
+        actionLog.append("\n\t" + currentPlayer.getName() + " " + msg + ".");
+        actionLog.getCaret().setDot(Integer.MAX_VALUE);
     }
 
     public void updateActionLogCustom(String msg) {
-        actionLog.append("\t" + msg + ".\n");
+        actionLog.append("\n\t" + msg + ".");
+        actionLog.getCaret().setDot(Integer.MAX_VALUE);
     }
 
     public void updateActionLogError(String msg) {
-        actionLog.append("\n\t" + msg + "\n");
+        actionLog.append("\n\n\t" + msg);
+        actionLog.getCaret().setDot(Integer.MAX_VALUE);
     }
 
     public boolean isActionValid() {
@@ -525,7 +575,6 @@ public class GamePanel extends JPanel {
                 tileButtons.get(tile).setSelectedIcon(tile.getHelicopterSelected());
                 tiles.add(tile);
             } else {
-                updateActionLogCustom("BOOM!");
                 JButton tileButton = tileButtons.get(tile);
                 tileButton.setDisabledIcon(tile.getHelicopterSelected());
                 tileButton.setEnabled(false);
@@ -557,6 +606,14 @@ public class GamePanel extends JPanel {
     private void disableTiles(Tile remainingTile) {
         for (Tile tile : tileButtons.keySet()) {
             if (!tile.equals(remainingTile)) {
+                tileButtons.get(tile).setEnabled(false);
+            }
+        }
+    }
+
+    private void disableTiles(Tile remainingTile, Tile secondRemainingTile) {
+        for (Tile tile : tileButtons.keySet()) {
+            if (!tile.equals(remainingTile) && !tile.equals(secondRemainingTile)) {
                 tileButtons.get(tile).setEnabled(false);
             }
         }
@@ -807,6 +864,13 @@ public class GamePanel extends JPanel {
             shoreTiles = game.getBoard().getAvailableShoreTiles(currentPlayer, false);
         }
 
+        System.out.println(selectedTile + " " + secondShoreTile);
+        if (selectedTile != null)
+            shoreTiles.remove(selectedTile);
+
+        if (secondShoreTile != null)
+            shoreTiles.remove(secondShoreTile);
+
         ImageIcon shoreIcon = null;
         try {
             shoreIcon = ImageCreate.get("/images/action_icons/shore.png");
@@ -837,6 +901,17 @@ public class GamePanel extends JPanel {
 
     private void removeShoreTileIcons() {
         HashSet<Tile> shoreTiles;
+        System.out.println(selectedTile + " " + secondShoreTile);
+        if (game.getCurrentPlayer().getRole() == Role.ENGINEER && selectedAction != Action.SPECIAL) {
+            if (selectedTile != null && secondShoreTile == null) {
+                JLayeredPane layeredPane = layeredPanes.get(selectedTile);
+                removeComponent(layeredPane, "Shore");
+                return;
+            } else if (selectedTile == null && secondShoreTile != null) {
+                JLayeredPane layeredPane = layeredPanes.get(secondShoreTile);
+                removeComponent(layeredPane, "Shore");
+            }
+        }
 
         if (selectedAction == Action.SPECIAL) {
             shoreTiles = game.getBoard().getAvailableShoreTiles(currentPlayer, true);
@@ -849,10 +924,23 @@ public class GamePanel extends JPanel {
             removeComponent(layeredPane, "Shore");
         }
 
-        if (selectedTile != null)
+        if (selectedTile != null && secondShoreTile != null)
+            disableTiles(selectedTile, secondShoreTile);
+        else if (selectedTile != null)
             disableTiles(selectedTile);
         else
             disableTiles();
+    }
+
+    private void removeAllShoreIcons() {
+        HashSet<Tile> shoreTiles = game.getBoard().getAvailableShoreTiles(currentPlayer, true);
+
+        for (Tile tile: shoreTiles) {
+            JLayeredPane layeredPane = layeredPanes.get(tile);
+            removeComponent(layeredPane, "Shore");
+        }
+
+        disableTiles();
     }
 
     // Shows the highlight around pawns that can be traded with
@@ -965,6 +1053,14 @@ public class GamePanel extends JPanel {
         return landingTile;
     }
 
+    public void setSecondShoreTile(Tile secondShoreTile) {
+        this.secondShoreTile = secondShoreTile;
+    }
+
+    public Tile getSecondShoreTile() {
+        return secondShoreTile;
+    }
+
     public void setSelectedCard(Object selectedCard) {
         this.selectedCard = selectedCard;
     }
@@ -1002,7 +1098,6 @@ public class GamePanel extends JPanel {
     public void setWaterMeter(JLabel level, JLabel marker) {
         waterLevelIcon = level;
         waterMarkerIcon = marker;
-
     }
 
     public void setAction(HashMap<String, JButton> buttons, JLabel indicator) {
@@ -1010,11 +1105,13 @@ public class GamePanel extends JPanel {
         actionsLeftIndicator = indicator;
     }
 
-    public void setDecks(JLabel floodDeck, JLabel floodDiscard, JLabel treasureDeck, JLabel treasureDiscard) {
+    public void setDecks(JLabel floodDeck, JLabel floodDiscard, JLabel treasureDeck, JLabel treasureDiscard, JLabel floodDiscardCard, JLabel treasureDiscardCard) {
         this.floodDeck = floodDeck;
         this.floodDiscard = floodDiscard;
         this.treasureDeck = treasureDeck;
         this.treasureDiscard = treasureDiscard;
+        this.floodDiscardCard = floodDiscardCard;
+        this.treasureDiscardCard = treasureDiscardCard;
     }
 
     public void setPlayers(HashMap<Player, ArrayList<CardButton>> playerCards, JLabel turnIndicator, Player currentPlayer) {

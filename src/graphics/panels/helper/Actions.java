@@ -60,14 +60,27 @@ public class Actions {
  */
     public static boolean shore() {
         Tile selectedTile = gp.getSelectedTile();
+        Tile secondSelectedTile = gp.getSecondShoreTile();
 
-        if (selectedTile == null) {
+        if (selectedTile == null && secondSelectedTile == null) {
             gp.updateActionLogError("Select a tile before shoring!");
             return false;
         }
 
-        game.shore(selectedTile);
-        gp.updateTile(selectedTile);
+        if (selectedTile == null && game.getCurrentPlayer().getRole() != Role.ENGINEER) {
+            gp.updateActionLogError("Select a tile before shoring!");
+            return false;
+        }
+
+        if (gp.getGame().getCurrentPlayer().getRole() == Role.ENGINEER && secondSelectedTile != null) {
+            game.shore(secondSelectedTile);
+            gp.updateTile(secondSelectedTile);
+        }
+
+        if (selectedTile != null) {
+            game.shore(selectedTile);
+            gp.updateTile(selectedTile);
+        }
 
         return true;
     }
@@ -140,12 +153,12 @@ public class Actions {
             case HELICOPTER_LIFT:
                 if (!gp.isGettingLandingSite()) {
                     if (gp.getSelectedTile() == null) {
-                        gp.updateActionLogError("Select a tile to lift off from!");
+                        gp.updateActionLogError("Select a tile to lift off from and confirm!");
                         return false;
                     }
 
                     gp.setGettingLandingSite(true);
-                    gp.updateActionLogCustom("Select a tile to land on");
+                    gp.updateActionLogError("Select a tile to land on!");
                     gp.enableLandingTiles();
                     return false;
                 }
