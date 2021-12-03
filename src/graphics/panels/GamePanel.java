@@ -27,9 +27,8 @@ import java.util.HashSet;
 
 /*
     TODO:
-        - Allow player to use Special Action card when discarding
-        - Exception where player's current tile sinks
-        - Run win and lose conditions
+        - Exception where player's current tile sinks, player has to move
+        - Run win and lose conditions (done; not 100% tested)
         - Complete HelpPanel and InputPanel
         -
         - Highlight pawn of the current player's turn *
@@ -80,7 +79,9 @@ public class GamePanel extends JPanel {
     private Tile secondShoreTile = null; // Specifically for Engineer
     private Tile landingTile = null; // Specifically for Helicopters Lift
     private boolean isGettingLandingSite = false; // Specifically for Helicopters Lift
+
     private boolean isDiscardingCard = false;
+    private Player playerDiscarding = null;
 
     private Player selectedPlayer = null;
     private Object selectedCard = null;
@@ -104,7 +105,7 @@ public class GamePanel extends JPanel {
 
     // Called when player clicks confirm button
     public void confirmAction() {
-
+        System.out.println(game.getTreasureDeck().toString());
         if (!isDiscardingCard && selectedAction == Action.NONE) {
             updateActionLogError("Select an action first before confirming!");
             return;
@@ -133,10 +134,21 @@ public class GamePanel extends JPanel {
                 break;
         }
 
+        if (game.hasWon()) {
+            gameWin();
+            return;
+        }
+
         if (isDiscardingCard) {
             System.out.println("Discarding " + selectedCard);
-            currentPlayer.removeCard(selectedCard);
-            ArrayList<CardButton> playerCardButtons = playerCards.get(currentPlayer);
+
+            if (selectedCard.getClass().getSimpleName().equals("SpecialCard")) {
+                if (!Actions.special())
+                    return;
+            }
+
+            playerDiscarding.removeCard(selectedCard);
+            ArrayList<CardButton> playerCardButtons = playerCards.get(playerDiscarding);
 
             for (CardButton cardButton : playerCardButtons) {
                 if (cardButton.getCard().equals(selectedCard)) {
@@ -147,11 +159,27 @@ public class GamePanel extends JPanel {
                 }
             }
 
+            updateDiscard();
+
             isDiscardingCard = false;
             System.out.println(game.getActionsLeft());
             updateHands();
 
-            nextTurn();
+            System.out.println("Cards drawn: " + game.getCardsDrawn());
+            if (playerDiscarding == currentPlayer) {
+                if (game.getCardsDrawn() >= 2) {
+                    nextTurn();
+                } else {
+                    game.nextPlayerTurn();
+                    //discardExcessCard(playerDiscarding);
+                    return;
+                }
+            }
+
+
+
+            if (game.getHasLost())
+                return;
         }
 
         reset();
@@ -159,6 +187,9 @@ public class GamePanel extends JPanel {
         // if player used up all actions
         if (game.getActionsLeft() <= 0)
             nextTurn();
+
+        if (game.getHasLost())
+            return;
 
         if (isDiscardingCard)
             return;
@@ -172,6 +203,11 @@ public class GamePanel extends JPanel {
     }
 
     private void reset() {
+        if (game.getHasLost()) {
+            gameLost();
+            return;
+        }
+
         enableActionButtons();
         disableCards();
         disableTiles();
@@ -187,12 +223,14 @@ public class GamePanel extends JPanel {
         selectedPlayer = null;
         selectedCard = null;
         isDiscardingCard = false;
+        playerDiscarding = null;
         setGettingLandingSite(false);
+        game.setCardsDrawn(0);
         selectedAction = Action.NONE;
     }
 
     public void resetHelicoptersLift() {
-        if (isGettingLandingSite) {
+        if (isGettingLandingSite || (selectedCard != null && selectedCard.getClass().getSimpleName().equals("SpecialCard"))) {
             for (Tile tile : tileButtons.keySet()) {
                 if (tile.equals(selectedTile)) {
                     JButton tileButton = tileButtons.get(tile);
@@ -205,7 +243,19 @@ public class GamePanel extends JPanel {
 
     // Called when player clicks cancel button
     public void cancelAction() {
-        if (selectedAction != Action.NONE) {
+        if (isDiscardingCard && selectedCard.getClass().getSimpleName().equals("SpecialCard")) {
+            removeIcons(Action.SPECIAL);
+            disableTiles();
+            resetHelicoptersLift();
+            removeAllShoreIcons();
+            disableCards();
+            enablePlayerCards(playerDiscarding);
+
+            selectedCard = null;
+            selectedTile = null;
+            landingTile = null;
+            setGettingLandingSite(false);
+        } else if (selectedAction != Action.NONE) {
             reset();
         }
     }
@@ -425,6 +475,7 @@ public class GamePanel extends JPanel {
         int x = waterMarkerIcon.getX();
         waterMarkerIcon.setBounds(x, waterLevel.getHeight(), waterMarkerIcon.getWidth(), waterMarkerIcon.getHeight());
 
+        System.out.println("Updated to " + waterLevel.getHeight());
         revalidate();
         repaint();
     }
@@ -441,8 +492,14 @@ public class GamePanel extends JPanel {
         System.out.println(isDiscardingCard);
         selectedTile = null;
         selectedAction = Action.NONE;
+        updateWaterLevel();
 
         game.nextPlayerTurn();
+
+        if (game.getHasLost()) {
+            gameLost();
+            return;
+        }
 
         updateHands();
         updateDiscard();
@@ -478,15 +535,39 @@ public class GamePanel extends JPanel {
         }
     }
 
-    public void discardExcessCard() {
+    private void gameEnd() {
+        disableTiles();
+        disableActionButtons();
+        endTurnButton.setEnabled(false);
+        disableCards();
+    }
+
+    public void gameLost() {
+        System.out.println("Game lost!");
+        gameEnd();
+
+        updateActionLogCustom("Press the confirm button to play again");
+    }
+
+    public void gameWin() {
+        System.out.println("Game win!");
+
+        updateActionLogCustom("Congratulations! You have successfully escaped Forbidden Island\n\twith all four treasures!");
+        updateActionLogCustom("Press the confirm button to play again");
+        gameEnd();
+    }
+
+    public void discardExcessCard(Player player) {
         System.out.println("Called discard excess cards!");
-        updateActionLogCustom(game.getCurrentPlayer().getName() + "'s hand exceeded card limit. Select a card to discard");
+        selectedAction = Action.NONE;
+        playerDiscarding = player;
+        updateActionLogCustom(player.getName() + "'s hand exceeded card limit. Select a card to discard");
 
         disableActionButtons();
         endTurnButton.setEnabled(false);
 
         disableTiles();
-        enablePlayerCards(game.getCurrentPlayer());
+        enablePlayerCards(player);
     }
 
     public void updateActionLog() {
@@ -496,7 +577,7 @@ public class GamePanel extends JPanel {
 
     public void updateActionLogActionsLeft() {
         if (game.getActionsLeft() > 0)
-            actionLog.append("\n\n\t" + currentPlayer.getName() + " has (" + game.getActionsLeft() + "/3) actions left.");
+            actionLog.append("\n\t" + currentPlayer.getName() + " has (" + game.getActionsLeft() + "/3) actions left.");
         actionLog.getCaret().setDot(Integer.MAX_VALUE);
     }
 
@@ -511,7 +592,7 @@ public class GamePanel extends JPanel {
     }
 
     public void updateActionLogError(String msg) {
-        actionLog.append("\n\n\t" + msg);
+        actionLog.append("\n\t" + msg);
         actionLog.getCaret().setDot(Integer.MAX_VALUE);
     }
 
@@ -620,7 +701,7 @@ public class GamePanel extends JPanel {
         }
     }
 
-    public void enableLandingTiles() {
+    public HashSet<Tile> enableLandingTiles() {
         HashSet<Tile> tiles = new HashSet<>();
 
         for (Tile tile : tileButtons.keySet()) {
@@ -636,7 +717,8 @@ public class GamePanel extends JPanel {
             }
         }
 
-        showHelicopterLiftIcons(tiles);
+        return tiles;
+//        showHelicopterLiftIcons(tiles);
     }
 
     private void enableTiles(HashSet<Tile> tiles) {
@@ -684,6 +766,7 @@ public class GamePanel extends JPanel {
     public void enablePlayerCards(Player player) {
         for (CardButton card : playerCards.get(player)) {
             //System.out.println("Enabled " + card.getCard());
+            card.setSelected(false);
             card.setEnabled(true);
         }
     }
@@ -731,7 +814,15 @@ public class GamePanel extends JPanel {
 
     // ------------------------ ADD/REMOVE ACTION ICONS ------------------------
     public void showIcons() {
-        switch (selectedAction) {
+        displayIcons(selectedAction);
+    }
+
+    public void showIcons(Action action) {
+        displayIcons(action);
+    }
+
+    private void displayIcons(Action action) {
+        switch (action) {
             case MOVE:
                 if (currentPlayer.getRole() == Role.NAVIGATOR) { // If navigator hasn't selected a pawn
                     if (selectedPlayer == null)
@@ -770,8 +861,16 @@ public class GamePanel extends JPanel {
         }
     }
 
+    public void removeIcons(Action action) {
+        removeActionIcons(action);
+    }
+
     public void removeIcons() {
-        switch (selectedAction) {
+        removeActionIcons(selectedAction);
+    }
+
+    private void removeActionIcons(Action action) {
+        switch (action) {
             case MOVE:
                 removeMovementTileIcons();
                 break;
@@ -799,6 +898,8 @@ public class GamePanel extends JPanel {
                 break;
         }
     }
+
+
 
 
     private void showMovementTiles() {
@@ -865,7 +966,7 @@ public class GamePanel extends JPanel {
             disableTiles();
     }
 
-    private void showHelicopterLiftIcons(HashSet<Tile> tiles) {
+    public void showHelicopterLiftIcons(HashSet<Tile> tiles) {
 //        HashSet<Tile> tiles = game.getBoard().getAllPlayerTiles();
 
         ImageIcon helicopterIcon = null;
@@ -882,6 +983,9 @@ public class GamePanel extends JPanel {
         }
 
         for (Tile tile : tiles) {
+            if (tile.getState() == TileState.SUNK)
+                continue;
+
             JButton tileBtn = tileButtons.get(tile);
             Rectangle bounds = tileBtn.getBounds();
             bounds.width -= 10;
@@ -920,8 +1024,8 @@ public class GamePanel extends JPanel {
     private void showShoreTiles() {
         HashSet<Tile> shoreTiles;
 
-        if (selectedAction == Action.SPECIAL) {
-            shoreTiles = game.getBoard().getAvailableShoreTiles(currentPlayer, true);
+        if (selectedAction == Action.SPECIAL || (isDiscardingCard && selectedCard.getClass().getSimpleName().equals("SpecialCard"))) {
+            shoreTiles = game.getBoard().getAvailableShoreTiles(playerDiscarding, true);
         } else {
             shoreTiles = game.getBoard().getAvailableShoreTiles(currentPlayer, false);
         }
@@ -964,7 +1068,7 @@ public class GamePanel extends JPanel {
     private void removeShoreTileIcons() {
         HashSet<Tile> shoreTiles;
         System.out.println(selectedTile + " " + secondShoreTile);
-        if (game.getCurrentPlayer().getRole() == Role.ENGINEER && selectedAction != Action.SPECIAL) {
+        if (game.getCurrentPlayer().getRole() == Role.ENGINEER && selectedAction != Action.SPECIAL && !isDiscardingCard) {
             if (selectedTile != null && secondShoreTile == null) {
                 JLayeredPane layeredPane = layeredPanes.get(selectedTile);
                 removeComponent(layeredPane, "Shore");
@@ -975,8 +1079,8 @@ public class GamePanel extends JPanel {
             }
         }
 
-        if (selectedAction == Action.SPECIAL) {
-            shoreTiles = game.getBoard().getAvailableShoreTiles(currentPlayer, true);
+        if (selectedAction == Action.SPECIAL || (isDiscardingCard && selectedCard.getClass().getSimpleName().equals("SpecialCard"))) {
+            shoreTiles = game.getBoard().getAvailableShoreTiles(playerDiscarding, true);
         } else {
             shoreTiles = game.getBoard().getAvailableShoreTiles(currentPlayer, false);
         }
@@ -1021,7 +1125,7 @@ public class GamePanel extends JPanel {
     }
 
     // Removes the highlight around all pawns
-    private void disablePawns() {
+    public void disablePawns() {
         for (JButton pawn : playerPawns.keySet()) {
             pawn.setEnabled(false);
             pawn.setSelected(false);
@@ -1121,6 +1225,14 @@ public class GamePanel extends JPanel {
 
     public Tile getSecondShoreTile() {
         return secondShoreTile;
+    }
+
+    public Player getPlayerDiscarding() {
+        return playerDiscarding;
+    }
+
+    public void setPlayerDiscarding(Player playerDiscarding) {
+        this.playerDiscarding = playerDiscarding;
     }
 
     public void setSelectedCard(Object selectedCard) {

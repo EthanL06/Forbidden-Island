@@ -472,7 +472,7 @@ public class Setup {
         gp.add(actionLogText);
 
         JTextArea actionLog = new JTextArea();
-        actionLog.setFont(new Font("Roboto", Font.BOLD, 15));
+        actionLog.setFont(new Font("Roboto", Font.BOLD, 13));
         actionLog.setText("\tWelcome to Forbidden Island! Escape before the island sinks!\n\tPress the ? icon for help.");
         actionLog.setTabSize(1);
         actionLog.setEditable(false);

@@ -463,7 +463,7 @@ public class Board {
         }
     }
 
-    public boolean haveTreasureTilesSunk() {
+    public boolean haveTreasureTilesSunk(GamePanel gamePanel) {
         for (Treasure key: treasureTiles.keySet()) {
             Tile[] tiles = treasureTiles.get(key);
 
@@ -472,6 +472,7 @@ public class Board {
                 continue;
 
             if (tiles[0].getState() == TileState.SUNK && tiles[1].getState() == TileState.SUNK) {
+                gamePanel.updateActionLogError("Game over! Both tiles containing " + tiles[0].getTreasure() + " have sunk!");
                 return true;
             }
         }
@@ -493,7 +494,7 @@ public class Board {
         for (int r = 0; r < board.length; r++) {
             for (int c = 0; c < board[r].length; c++) {
                 Tile tile = board[r][c];
-                if (tile.getState() != TileState.EMPTY) {
+                if (tile.getState() != TileState.EMPTY && tile.getState() != TileState.SUNK) {
                     tiles.add(tile);
                 }
             }

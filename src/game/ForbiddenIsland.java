@@ -49,6 +49,7 @@ public class ForbiddenIsland implements Runnable {
     private Player currentPlayer;
     private int currentPlayerIndex;
     private boolean hasWon;
+    private boolean hasLost;
 
     private GamePanel gamePanel;
     private int actionsLeft;
@@ -61,6 +62,8 @@ public class ForbiddenIsland implements Runnable {
         this.difficulty = difficulty;
         this.actionsLeft = 3;
         this.cardsDrawn = 0;
+        this.hasWon = false;
+        this.hasLost = false;
     }
 
     @Override
@@ -280,7 +283,7 @@ public class ForbiddenIsland implements Runnable {
         actionsLeft--;
         board.shoreTile(tile);
         gamePanel.updateActionLog("shored " + tile);
-        gamePanel.updateActionLogActionsLeft();
+        //gamePanel.updateActionLogActionsLeft();
     }
 
     public void give(Player recipient, Object card) {
@@ -372,21 +375,22 @@ public class ForbiddenIsland implements Runnable {
         }
     }
 
-    public boolean nextPlayerTurn() {
+    public void nextPlayerTurn() {
         gamePanel.updateActionLogError("");
 
-        // false if player needs to discard excess cards
+        // if player needs to discard excess cards
         if (!distributeTreasureCards()) {
-            return false;
+            return;
         }
 
         gamePanel.setDiscardingCard(false);
-        cardsDrawn = 0;
 
         drawFloodCards();
 
-        if (hasLost())
-            System.err.println("LOST THE GAME!");
+        if (hasLost()) {
+            hasLost = true;
+            return;
+        }
 
         actionsLeft = 3;
 
@@ -396,8 +400,6 @@ public class ForbiddenIsland implements Runnable {
             currentPlayerIndex++;
 
         currentPlayer = players[currentPlayerIndex];
-
-        return true;
     }
 
 
@@ -420,9 +422,9 @@ public class ForbiddenIsland implements Runnable {
 
                 treasureDeck.addToDiscard(card);
                 waterLevel.increaseWaterMarker();
+                gamePanel.updateWaterLevel();
                 gamePanel.updateActionLogCustom("Water level is currently at " + waterLevel.getWaterLevel());
 
-                gamePanel.updateWaterLevel();
 
                 drawnWatersRise = true;
                 // Run lose condition here
@@ -464,7 +466,7 @@ public class ForbiddenIsland implements Runnable {
                 // Run check if player's hand exceeds hand limit
                 if (currentPlayer.getHandSize() > 5){
                     gamePanel.setDiscardingCard(true);
-                    gamePanel.discardExcessCard();
+                    gamePanel.discardExcessCard(currentPlayer);
                     return false;
                 }
             }
@@ -473,7 +475,7 @@ public class ForbiddenIsland implements Runnable {
         if (drawnWatersRise) {
             // Shuffle Flood discard pile
             // Place discard pile on top of Flood draw pile
-            gamePanel.updateActionLog("drew a Waters Rise! card. Flood discard pile is shuffled\nand placed on top of draw flood draw pile");
+            gamePanel.updateActionLog("drew a Waters Rise! card.\n\tFlood discard pile is shuffled and placed on top of draw flood draw pile");
             floodDeck.shuffleDiscard();
             floodDeck.placeDiscardOnDeck();
         }
@@ -541,17 +543,16 @@ public class ForbiddenIsland implements Runnable {
     // Runs all lose conditions
     private boolean hasLost() {
         if (waterLevel.hasReachedMax()) {
-            System.err.println("WATER LEVEL REACHED MAX LEVEL");
+            gamePanel.updateActionLogError("Game over! Water level has reached the max level!");
             return true;
         }
 
         if (board.getTile("Fools' Landing").getState() == TileState.SUNK) {
-            System.err.println("FOOLS LANDING HAS SUNK");
+            gamePanel.updateActionLogError("Game over! Fools' Landing tile has sunk!");
             return true;
         }
 
-        if (board.haveTreasureTilesSunk()) {
-            System.err.println("TREASURE TILE HAS SUNK");
+        if (board.haveTreasureTilesSunk(gamePanel)) {
             return true;
         }
 
@@ -561,12 +562,27 @@ public class ForbiddenIsland implements Runnable {
          */
         for (Player player : players) {
             if (player.getOccupiedTile().getState() == TileState.SUNK && board.getAvailableMovementTiles(player).size() == 0) {
-                System.err.println(player.getNumber());
+                gamePanel.updateActionLogError("Game over! " + player + "'s tile has sunk and is unable to move!");
                 return true;
             }
         }
 
         return false;
+    }
+
+    public boolean hasWon() {
+        Tile foolsLanding = new Tile("Fools' Landing");
+
+        for (Player player: players) {
+            if (!player.getOccupiedTile().equals(foolsLanding))
+                return false;
+        }
+
+        return capturedTreasure.size() == 4;
+    }
+
+    public boolean getHasLost() {
+        return hasLost;
     }
 
     private boolean isAbleToWin() {
@@ -637,10 +653,22 @@ public class ForbiddenIsland implements Runnable {
         return actionsLeft;
     }
 
+    public void setActionsLeft(int actionsLeft) {
+        this.actionsLeft = actionsLeft;
+    }
+
     public boolean decrementActionsLeft() {
         actionsLeft--;
 
         return actionsLeft > 0;
+    }
+
+    public void setCardsDrawn(int cardsDrawn) {
+        this.cardsDrawn = cardsDrawn;
+    }
+
+    public int getCardsDrawn() {
+        return cardsDrawn;
     }
 
     /*    //to access board in the BoardPanel class

@@ -78,6 +78,12 @@ public class Actions {
             gp.updateTile(selectedTile);
         }
 
+        gp.updateActionLogActionsLeft();
+
+        if (game.getCurrentPlayer().getRole() == Role.ENGINEER && selectedTile != null && secondSelectedTile != null) {
+            game.setActionsLeft(game.getActionsLeft()+1);
+        }
+
         return true;
     }
 
@@ -114,6 +120,13 @@ public class Actions {
         game.give(selectedPlayer, cardToTrade);
 
         gp.updateHands();
+
+        if (selectedPlayer.getHand().size() > 5) {
+            gp.setDiscardingCard(true);
+            gp.discardExcessCard(selectedPlayer);
+            gp.disablePawns();
+            return false;
+        }
 
         return true;
 
@@ -155,20 +168,25 @@ public class Actions {
 
                     gp.setGettingLandingSite(true);
                     gp.updateActionLogError("Select a tile to land on!");
-                    gp.enableLandingTiles();
+                    gp.showHelicopterLiftIcons(gp.enableLandingTiles());
                     return false;
                 }
+
+                if (gp.getSelectedTile().getName().equals("Fools' Landing") && game.hasWon())
+                    return true;
 
                 if (gp.getLandingTile() == null) {
                     gp.updateActionLogError("Select a landing site!");
                     gp.enableLandingTiles();
                     return false;
                 }
+
                 break;
         }
 
         game.special(specialCard);
         gp.updateHands();
+        gp.resetHelicoptersLift();
 
         return true;
     }

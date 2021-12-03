@@ -54,6 +54,11 @@ public class Listeners {
             gp.setLandingTile(gp.getGame().getBoard().getTile(tile.getName()));
         }
 
+        if (gp.isDiscardingCard() && gp.getSelectedCard() != null && gp.getSelectedCard().getClass().getSimpleName().equals("SpecialCard")) {
+            gp.removeIcons(Action.SPECIAL);
+            return;
+        }
+
         gp.removeIcons();
     }
 
@@ -68,6 +73,11 @@ public class Listeners {
 
         } else {
             gp.setLandingTile(null);
+        }
+
+        if (gp.isDiscardingCard() && gp.getSelectedCard().getClass().getSimpleName().equals("SpecialCard")) {
+            gp.showIcons(Action.SPECIAL);
+            return;
         }
 
         gp.showIcons();
@@ -132,13 +142,24 @@ public class Listeners {
         gp.disableCards(card);
         gp.updateActionLog("selected " + card.getCard().toString());
 
-        if (gp.getSelectedAction() == Action.SPECIAL) {
+        if (gp.getSelectedAction() == Action.SPECIAL || (gp.isDiscardingCard() && gp.getSelectedCard().getClass().getSimpleName().equals("SpecialCard"))) {
             SpecialCard specialCard = (SpecialCard) gp.getSelectedCard();
 
             if (specialCard.getType() == Special.HELICOPTER_LIFT) {
                 if (!gp.isGettingLandingSite() && gp.getSelectedTile() == null) {
                     gp.updateActionLogError("Select a tile to lift off from and confirm!");
                 }
+            }
+
+            if (gp.isDiscardingCard()) {
+//                if (specialCard.getType() == Special.SANDBAGS)
+//                    gp.showIcons(Action.SHORE);
+//                else
+//                    gp.showIcons(Action.SPECIAL);
+
+                gp.showIcons(Action.SPECIAL);
+
+                return;
             }
 
             gp.showIcons();
@@ -151,7 +172,14 @@ public class Listeners {
         gp.updateActionLog("unselected " + card.getCard().toString());
 
         if (gp.isDiscardingCard()) {
-            gp.enablePlayerCards(gp.getGame().getCurrentPlayer());
+            gp.enablePlayerCards(gp.getPlayerDiscarding());
+
+            if (card.getCard().getClass().getSimpleName().equals("SpecialCard")) {
+                gp.removeIcons(Action.SPECIAL);
+                gp.disableTiles();
+                gp.resetHelicoptersLift();
+            }
+
         } else if (gp.getSelectedAction() == Action.GIVE) {
             gp.enableTradeCards(gp.getGame().getCurrentPlayer());
         } else if (gp.getSelectedAction() == Action.SPECIAL) {

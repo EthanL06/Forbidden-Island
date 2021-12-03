@@ -87,6 +87,10 @@ public class TreasureDeck implements Deck<Object> {
         return discard.size();
     }
 
+    public String toString() {
+        return treasureDeck.toString();
+    }
+
     @Override
     public Stack shuffle() {
         Collections.shuffle(treasureDeck, Randomizer.getRandom());
