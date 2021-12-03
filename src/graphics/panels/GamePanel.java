@@ -85,6 +85,7 @@ public class GamePanel extends JPanel {
 
     private Player selectedPlayer = null;
     private Object selectedCard = null;
+    private boolean gameEnd = false;
 
     public GamePanel(ForbiddenIsland game) {
         this.game = game;
@@ -555,6 +556,8 @@ public class GamePanel extends JPanel {
         disableActionButtons();
         endTurnButton.setEnabled(false);
         disableCards();
+
+        gameEnd = true;
     }
 
     public void gameLost() {
@@ -1301,6 +1304,10 @@ public class GamePanel extends JPanel {
 
     public void setPlayerSunkTile(Player playerSunkTile) {
         this.playerSunkTile = playerSunkTile;
+    }
+
+    public boolean hasGameEnd() {
+        return gameEnd;
     }
 
     public void setEndTurnButton(JButton button) {

@@ -34,7 +34,7 @@ public class ForbiddenIsland implements Runnable {
         - Ability to look through Treasure and Flood discard piles
      */
 
-    private final int seed;
+    private final long seed;
     private final int numOfPlayers;
     private final Difficulty difficulty;
 
@@ -56,7 +56,7 @@ public class ForbiddenIsland implements Runnable {
     private int cardsDrawn;
     private int floodCardsDrawn;
 
-    public ForbiddenIsland(int seed, int numOfPlayers, Difficulty difficulty) {
+    public ForbiddenIsland(long seed, int numOfPlayers, Difficulty difficulty) {
         System.err.println("Forbidden Island initialized.");
         this.seed = seed;
         this.numOfPlayers = numOfPlayers;
@@ -73,7 +73,7 @@ public class ForbiddenIsland implements Runnable {
         setup(seed, numOfPlayers, difficulty);
     }
 
-    public void setup(int seed, int numOfPlayers, Difficulty difficulty) {
+    public void setup(long seed, int numOfPlayers, Difficulty difficulty) {
         System.err.println("\n=== START OF GAME SET UP ===");
         Randomizer.setRandom(seed);
         players = new Player[numOfPlayers];

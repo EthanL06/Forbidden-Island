@@ -1,14 +1,11 @@
 package graphics.panels;
 
-import game.enums.Difficulty;
 import graphics.Window;
-import graphics.panels.RootPanel;
 import graphics.util.ButtonFactory;
 import graphics.util.CenteredPosition;
 import graphics.util.ImageCreate;
 import graphics.util.ImageScaler;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -25,7 +22,7 @@ public class TitlePanel extends JPanel {
         JLabel title = null;
 
         try {
-            title = new JLabel(ImageCreate.get("/images/title.png"));
+            title = new JLabel(ImageCreate.get("/images/text/title.png"));
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -68,8 +65,10 @@ public class TitlePanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 System.out.println("Pressed play");
-                RootPanel.addPanel("loading", new LoadingPanel(20007, 4, Difficulty.NORMAL)); // input here for debugging purposes
-                RootPanel.switchPanel("loading");
+                new InputPanel();
+                RootPanel.switchPanel("input");
+//                RootPanel.addPanel("loading", new LoadingPanel(20007, 4, Difficulty.NORMAL)); // input here for debugging purposes
+//                RootPanel.switchPanel("loading");
             }
         });
 

@@ -27,7 +27,7 @@ public class Actions {
     public static boolean move() {
         Player selectedPlayer;
 
-        if (game.getCurrentPlayer().getRole() == Role.NAVIGATOR) {
+        if (game.getCurrentPlayer().getRole() == Role.NAVIGATOR && gp.getPlayerSunkTile() == null) {
             selectedPlayer = gp.getSelectedPlayer();
             if (selectedPlayer == null) {
                 gp.updateActionLogError("Select a pawn to move!");

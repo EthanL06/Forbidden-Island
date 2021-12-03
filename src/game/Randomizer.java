@@ -6,7 +6,7 @@ public class Randomizer {
 
     private static Random r;
 
-    public static void setRandom(int seed) {
+    public static void setRandom(long seed) {
         r = new Random(seed);
     }
 

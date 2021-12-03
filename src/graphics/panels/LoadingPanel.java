@@ -3,12 +3,10 @@ package graphics.panels;
 import game.ForbiddenIsland;
 import game.enums.Difficulty;
 import graphics.Window;
-import graphics.panels.RootPanel;
 import graphics.util.CenteredPosition;
 import graphics.util.ImageCreate;
 import graphics.util.ImageScaler;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 
@@ -21,7 +19,7 @@ public class LoadingPanel extends JPanel {
 
     private final ForbiddenIsland game;
 
-    public LoadingPanel(int seed, int players, Difficulty difficulty) {
+    public LoadingPanel(long seed, int players, Difficulty difficulty) {
 
         setLayout(null);
         game = new ForbiddenIsland(seed, players, difficulty);
@@ -57,7 +55,7 @@ public class LoadingPanel extends JPanel {
 
         JLabel loading = null;
         try {
-            loading = new JLabel(ImageCreate.get("/images/loading.png"));
+            loading = new JLabel(ImageCreate.get("/images/text/loading.png"));
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -73,7 +71,7 @@ public class LoadingPanel extends JPanel {
 
         JLabel loadingDesc = null;
         try {
-            loadingDesc = new JLabel(ImageCreate.get("/images/loading-desc.png"));
+            loadingDesc = new JLabel(ImageCreate.get("/images/text/loading-desc.png"));
         } catch (Exception e) {
             System.out.println(e);
         }

@@ -6,6 +6,7 @@ import game.enums.Action;
 import game.enums.Role;
 import game.enums.Special;
 import graphics.panels.GamePanel;
+import graphics.panels.RootPanel;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -258,6 +259,11 @@ public class Listeners {
             public void actionPerformed(ActionEvent e) {
                 switch (button.getName()) {
                     case "Confirm":
+                        if (gp.hasGameEnd()) {
+                            RootPanel.switchPanel("input");
+                            return;
+                        }
+
                         if (gp.isDiscardingCard() && gp.getSelectedCard() == null) {
                             gp.updateActionLogError("Select a card to discard!");
                             break;
