@@ -27,8 +27,7 @@ import java.util.HashSet;
 
 /*
     TODO:
-        - Exception where player's current tile sinks, player has to move
-        - Run win and lose conditions (done; not 100% tested)
+        - Exception where player's current tile sinks, player has to move (done; still may have bugs)
         - Complete HelpPanel and InputPanel
         -
         - Highlight pawn of the current player's turn *
@@ -82,6 +81,7 @@ public class GamePanel extends JPanel {
 
     private boolean isDiscardingCard = false;
     private Player playerDiscarding = null;
+    private Player playerSunkTile = null;
 
     private Player selectedPlayer = null;
     private Object selectedCard = null;
@@ -106,7 +106,7 @@ public class GamePanel extends JPanel {
     // Called when player clicks confirm button
     public void confirmAction() {
         System.out.println(game.getTreasureDeck().toString());
-        if (!isDiscardingCard && selectedAction == Action.NONE) {
+        if (!isDiscardingCard && playerSunkTile == null && selectedAction == Action.NONE) {
             updateActionLogError("Select an action first before confirming!");
             return;
         }
@@ -176,10 +176,14 @@ public class GamePanel extends JPanel {
                 }
             }
 
-
-
             if (game.getHasLost())
                 return;
+        }
+
+        if (playerSunkTile != null) {
+            if (!Actions.move())
+                return;
+            updateActionLogCustom(playerSunkTile.getName() + " moved to " + selectedTile);
         }
 
         reset();
@@ -224,8 +228,10 @@ public class GamePanel extends JPanel {
         selectedCard = null;
         isDiscardingCard = false;
         playerDiscarding = null;
+        playerSunkTile = null;
         setGettingLandingSite(false);
         game.setCardsDrawn(0);
+        game.setFloodCardsDrawn(0);
         selectedAction = Action.NONE;
     }
 
@@ -255,6 +261,10 @@ public class GamePanel extends JPanel {
             selectedTile = null;
             landingTile = null;
             setGettingLandingSite(false);
+        } else if (playerSunkTile != null) {
+            selectedTile = null;
+            removeMovementTileIcons();
+            showMovementTiles(playerSunkTile);
         } else if (selectedAction != Action.NONE) {
             reset();
         }
@@ -509,6 +519,11 @@ public class GamePanel extends JPanel {
             return;
         }
 
+        if (playerSunkTile != null) {
+            return;
+        }
+
+
         // false if player is discarding excess cards
 //        if (!game.nextPlayerTurn()) {
 //            return;
@@ -568,6 +583,23 @@ public class GamePanel extends JPanel {
 
         disableTiles();
         enablePlayerCards(player);
+    }
+
+    public boolean playerSunkTile(Player player) {
+        System.out.println(selectedAction);
+        if (game.getBoard().getAvailableMovementTiles(player).size() == 0) {
+            return false;
+        }
+
+        updateActionLogCustom(player.getName() + "'s tile has sunk. Move to an available tile");
+        disableActionButtons();
+        endTurnButton.setEnabled(false);
+        disableCards();
+        enableTiles(game.getBoard().getAvailableMovementTiles(player));
+        showMovementTiles(player);
+
+        System.out.println(selectedTile);
+        return true;
     }
 
     public void updateActionLog() {
@@ -906,7 +938,7 @@ public class GamePanel extends JPanel {
         showMovementTiles(currentPlayer);
     }
 
-    private void showMovementTiles(Player player) {
+    public void showMovementTiles(Player player) {
         HashSet<Tile> movementTiles;
 
         if (player.getRole() == Role.NAVIGATOR) {
@@ -1261,6 +1293,14 @@ public class GamePanel extends JPanel {
 
     public void setDiscardingCard(boolean discardingCard) {
         isDiscardingCard = discardingCard;
+    }
+
+    public Player getPlayerSunkTile() {
+        return playerSunkTile;
+    }
+
+    public void setPlayerSunkTile(Player playerSunkTile) {
+        this.playerSunkTile = playerSunkTile;
     }
 
     public void setEndTurnButton(JButton button) {

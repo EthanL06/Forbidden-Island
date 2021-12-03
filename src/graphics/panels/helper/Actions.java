@@ -29,11 +29,12 @@ public class Actions {
 
         if (game.getCurrentPlayer().getRole() == Role.NAVIGATOR) {
             selectedPlayer = gp.getSelectedPlayer();
-
             if (selectedPlayer == null) {
                 gp.updateActionLogError("Select a pawn to move!");
                 return false;
             }
+        } else if (gp.getPlayerSunkTile() != null) {
+            selectedPlayer = gp.getPlayerSunkTile();
         } else {
             selectedPlayer = game.getCurrentPlayer();
         }

@@ -54,6 +54,7 @@ public class ForbiddenIsland implements Runnable {
     private GamePanel gamePanel;
     private int actionsLeft;
     private int cardsDrawn;
+    private int floodCardsDrawn;
 
     public ForbiddenIsland(int seed, int numOfPlayers, Difficulty difficulty) {
         System.err.println("Forbidden Island initialized.");
@@ -62,6 +63,7 @@ public class ForbiddenIsland implements Runnable {
         this.difficulty = difficulty;
         this.actionsLeft = 3;
         this.cardsDrawn = 0;
+        this.floodCardsDrawn = 0;
         this.hasWon = false;
         this.hasLost = false;
     }
@@ -115,159 +117,10 @@ public class ForbiddenIsland implements Runnable {
         this.gamePanel = gamePanel;
     }
 
-  /*  private void startGameLoop() {
-        System.err.println("=== START OF GAME LOOP ===\n");
-
-        Scanner input = new Scanner(System.in);
-//        Scanner input = null;
-//        try {
-//            input = new Scanner(new File("src/game/txt/test_data.txt"));
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        }
-
-        board.printBoard();
-
-        gameLoop:
-        while (true) {
-            // Game loop to be implemented
-            int actionsLeft = 3;
-            System.err.println("PLAYER " + currentPlayer.getNumber() + "'S TURN (" + currentPlayer.getRole() + "):\n");
-
-            actionLoop:
-            while (actionsLeft > 0) {
-                //BoardPanel.getInput() Will be implemented when finished
-                board.printBoardStatus(currentPlayer);
-                System.err.println("ENTER IN ACTION (" + actionsLeft + " actions left): ");
-
-                Action action = getActionInput(input);
-                switch (action) {
-                    case MOVE -> {
-                        if (currentPlayer.getRole() == Role.NAVIGATOR) {
-                            System.err.println(Arrays.toString(players) + "\nENTER PLAYER TO MOVE: ");
-                            int playerNum = input.nextInt();
-                            input.nextLine();
-
-                            if (playerNum == currentPlayer.getNumber()) { // if navigator chooses themselves, move like normally
-                                if (!move(currentPlayer, false, input))
-                                    continue;
-                            } else {
-                                boolean found = false;
-
-                                // Navigator moves selected player
-                                for (Player player: players) {
-                                    if (player.getNumber() == playerNum) {
-                                        found = true;
-                                        if (!move(player, true, input))
-                                            continue actionLoop;
-                                    }
-                                }
-
-                                if (!found) {
-                                    System.err.println("INVALID PLAYER");
-                                    continue;
-                                }
-                                // TODO: navigator moves another player
-                            }
-
-                        } else {
-                            if (!move(currentPlayer, false, input)) // if movement input is invalid
-                                continue;
-                        }
-
-                    }
-                    case SHORE -> {
-                        // Engineer can shore 2 tiles for 1 action
-                        if (!shore(input, false))
-                            continue;
-
-                        if (currentPlayer.getRole() == Role.ENGINEER && board.getAvailableShoreTiles(currentPlayer).size() > 0) {
-                            System.err.println("SHORE AGAIN? (Y/N): ");
-                            String answer = input.nextLine();
-
-                            // 2nd shore
-                            if (answer.toLowerCase(Locale.ROOT).equals("y")) {
-                                boolean flag = false; // to account for invalid inputs
-
-                                while (!flag) {
-                                    if (shore(input, false))
-                                        flag = true;
-                                }
-                            }
-                        }
-
-                    }
-                    case GIVE -> {
-                        if (!give(input))
-                            continue;
-                    }
-                    case SPECIAL -> {
-                        // Can use special cards from own hand or other players
-                        if (!special(input))
-                            continue;
-
-                        if (hasWon) {
-                            System.err.println("YOU HAVE WON THE GAME");
-                            break gameLoop;
-                        }
-                    }
-                    case CAPTURE -> {
-                        if (!capture())
-                            continue;
-                    }
-                    case END -> {
-                        System.err.println("\nPLAYER " + currentPlayer.getNumber() + " ENDED TURN");
-                        break actionLoop;
-                    }
-                    case INVALID -> {
-                        System.err.println("NOT A COMMAND");
-                        continue;
-                    }
-
-                    // Add case statements to print out status messages
-                    // such as flood status, island tile names, and locations of each player and decks
-                }
-
-                actionsLeft--;
-                System.err.println("Player " + currentPlayer.getNumber() + " has used action: " + action + " (" + actionsLeft + " actions left)");
-            }
-
-            if (!distributeTreasureCards(input)) { // Water level has reached max if drawn Waters Rise
-                System.err.println("YOU HAVE LOST THE GAME");
-                break;
-            }
-
-            if (hasWon) {
-                System.err.println("YOU HAVE WON THE GAME");
-                break;
-            }
-
-            drawFloodCards();
-
-            if (hasLost()) {
-                System.err.println("YOU HAVE LOST THE GAME");
-                break;
-            }
-
-            ArrayList<Player> playersToMove = getPlayersOccupiedTileSunk(); // Gets the players required to move bc of a sunk tile
-            for (Player player : playersToMove) {
-                System.err.println("PLAYER " + player.getNumber() + "'S TILE SUNK.\n");
-                boolean flag = false; // to account for invalid inputs
-
-                while (!flag) {
-                    if (move(player,false, input))
-                        flag = true;
-                }
-            }
-
-            nextPlayerTurn();
-        }
-
-        System.err.println("\n=== END OF GAME LOOP ===");
-    }*/
-
     public void move(Player player, Tile tile) {
-        actionsLeft--;
+        if (gamePanel.getPlayerSunkTile() == null)
+            actionsLeft--;
+
         board.movePlayer(player, tile);
 
         if (gamePanel.getSelectedPlayer() != null && !gamePanel.getSelectedPlayer().equals(currentPlayer)) {
@@ -283,7 +136,7 @@ public class ForbiddenIsland implements Runnable {
         actionsLeft--;
         board.shoreTile(tile);
         gamePanel.updateActionLog("shored " + tile);
-        //gamePanel.updateActionLogActionsLeft();
+        // gamePanel.updateActionLogActionsLeft();
     }
 
     public void give(Player recipient, Object card) {
@@ -383,9 +236,15 @@ public class ForbiddenIsland implements Runnable {
             return;
         }
 
+        cardsDrawn = 0;
+
         gamePanel.setDiscardingCard(false);
 
-        drawFloodCards();
+        if (!drawFloodCards()) {
+            return;
+        }
+
+        floodCardsDrawn = 0;
 
         if (hasLost()) {
             hasLost = true;
@@ -411,7 +270,7 @@ public class ForbiddenIsland implements Runnable {
             treasureDeck.switchDeckToDiscard();
         }
 
-        boolean drawnWatersRise = false;
+        int drawnWatersRise = 0;
         // Draws two treasure cards
         for (int i = cardsDrawn; i < 2; i++) {
             cardsDrawn++;
@@ -426,10 +285,15 @@ public class ForbiddenIsland implements Runnable {
                 gamePanel.updateActionLogCustom("Water level is currently at " + waterLevel.getWaterLevel());
 
 
-                drawnWatersRise = true;
-                // Run lose condition here
-//                if (waterLevel.hasReachedMax())
-//                    return false;
+                drawnWatersRise++;
+
+                if (drawnWatersRise == 1) {
+                    // Shuffle Flood discard pile
+                    // Place discard pile on top of Flood draw pile
+                    gamePanel.updateActionLog("drew a Waters Rise! card.\n\tFlood discard pile is shuffled and placed on top of draw flood draw pile");
+                    floodDeck.shuffleDiscard();
+                    floodDeck.placeDiscardOnDeck();
+                }
 
             } else {
                 Object temp = treasureDeck.drawCard();
@@ -472,19 +336,11 @@ public class ForbiddenIsland implements Runnable {
             }
         }
 
-        if (drawnWatersRise) {
-            // Shuffle Flood discard pile
-            // Place discard pile on top of Flood draw pile
-            gamePanel.updateActionLog("drew a Waters Rise! card.\n\tFlood discard pile is shuffled and placed on top of draw flood draw pile");
-            floodDeck.shuffleDiscard();
-            floodDeck.placeDiscardOnDeck();
-        }
-
         return true;
     }
 
 
-    private void drawFloodCards() {
+    private boolean drawFloodCards() {
         // ArrayOutOfBounds if flood deck's size is less than the amount of flood cards to draw
         if (floodDeck.isEmpty() || floodDeck.size() < waterLevel.getWaterLevel()) {
             gamePanel.updateActionLogError("Flood draw pile is empty. Using shuffled flood discard pile as new draw pile.");
@@ -492,8 +348,14 @@ public class ForbiddenIsland implements Runnable {
             floodDeck.switchDeckToDiscard();
         }
 
+        HashMap<Tile, Player> playerTiles = new HashMap<>();
+
+        for (Player player: players)
+            playerTiles.put(player.getOccupiedTile(), player);
+
         // Drawing of flood cards
-        for (int i = 0; i < waterLevel.getWaterLevel(); i++) {
+        for (int i = floodCardsDrawn; i < waterLevel.getWaterLevel(); i++) {
+            floodCardsDrawn++;
             FloodCard floodCard = floodDeck.drawCard();
             Tile tile = board.floodTile(floodCard, gamePanel);
             gamePanel.updateActionLogCustom(tile.getName() + " has been flooded");
@@ -501,44 +363,25 @@ public class ForbiddenIsland implements Runnable {
             if (tile.getState() == TileState.SUNK) {
                 floodDeck.removeFromDiscard(floodCard);
                 gamePanel.updateActionLogError(tile.getName() + " has sunk!");
+
+                if (playerTiles.containsKey(tile)) {
+                    Player player = playerTiles.get(tile);
+
+                    gamePanel.setPlayerSunkTile(player);
+                    if (!gamePanel.playerSunkTile(player)) {
+                        hasLost = true;
+                        break;
+                    }
+
+                    return false;
+                }
             }
+
+
         }
+
+        return true;
     }
-
-//    private void discardExcessCards(Player player, Scanner input) {
-//        int amountToDiscard = player.getHandSize() - 5;
-//        System.err.println("PLAYER'S HAND EXCEEDED HAND SIZE");
-//
-//        while (amountToDiscard > 0) {
-//            System.err.println(player.getHand());
-//            System.err.println("ENTER IN CARD INDEX TO REMOVE:");
-//
-//            int cardIndex = input.nextInt();
-//            input.nextLine();
-//
-//            Object obj = player.getCard(cardIndex);
-//
-//            if (obj.getClass().getSimpleName().equals("SpecialCard")) {
-//                SpecialCard card = (SpecialCard) obj;
-//
-//                if (card.getType() == Special.HELICOPTER_LIFT) {
-//                    if (!playHelicopterLift(input))
-//                        continue;
-//                } else {
-///*                    if (!shore(input, true))
-//                        continue;*/
-//                }
-//            }
-//
-//            if (hasWon) {
-//                break;
-//            }
-//
-//            treasureDeck.addToDiscard(obj);
-//            amountToDiscard--;
-//        }
-//    }
-
 
     // Runs all lose conditions
     private boolean hasLost() {
@@ -671,25 +514,11 @@ public class ForbiddenIsland implements Runnable {
         return cardsDrawn;
     }
 
-    /*    //to access board in the BoardPanel class
-    public Board getBoard() {
-        return board;
+    public int getFloodCardsDrawn() {
+        return floodCardsDrawn;
     }
 
-    public FloodDeck getFloodDeck() {
-        return floodDeck;
+    public void setFloodCardsDrawn(int floodCardsDrawn) {
+        this.floodCardsDrawn = floodCardsDrawn;
     }
-
-    public WaterLevel getWaterLevel() {
-        return waterLevel;
-    }
-
-
-    public Player[] getPlayerArray() {
-        return players;
-    }
-
-    public TreasureDeck getTreasureDeck() {
-        return treasureDeck;
-    }*/
 }

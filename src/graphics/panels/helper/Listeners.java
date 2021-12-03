@@ -51,12 +51,17 @@ public class Listeners {
                 gp.setSelectedTile(gp.getGame().getBoard().getTile(tile.getName()));
             }
         } else {
+            // if is getting landing site
             gp.setLandingTile(gp.getGame().getBoard().getTile(tile.getName()));
         }
 
         if (gp.isDiscardingCard() && gp.getSelectedCard() != null && gp.getSelectedCard().getClass().getSimpleName().equals("SpecialCard")) {
             gp.removeIcons(Action.SPECIAL);
             return;
+        }
+
+        if (gp.getPlayerSunkTile() != null) {
+            gp.removeIcons(Action.MOVE);
         }
 
         gp.removeIcons();
@@ -77,6 +82,11 @@ public class Listeners {
 
         if (gp.isDiscardingCard() && gp.getSelectedCard().getClass().getSimpleName().equals("SpecialCard")) {
             gp.showIcons(Action.SPECIAL);
+            return;
+        }
+
+        if (gp.getPlayerSunkTile() != null) {
+            gp.showMovementTiles(gp.getPlayerSunkTile());
             return;
         }
 
@@ -250,6 +260,11 @@ public class Listeners {
                     case "Confirm":
                         if (gp.isDiscardingCard() && gp.getSelectedCard() == null) {
                             gp.updateActionLogError("Select a card to discard!");
+                            break;
+                        }
+
+                        if (gp.getPlayerSunkTile() != null && gp.getSelectedTile() == null) {
+                            gp.updateActionLogError("Select a tile before moving!");
                             break;
                         }
 
