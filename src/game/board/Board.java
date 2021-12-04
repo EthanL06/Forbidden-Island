@@ -96,7 +96,9 @@ public class Board {
     public boolean movePlayer(Player player, Tile tile) {
         Location location = tileLocations.get(tile);
 
-        if (player.getRole() == Role.PILOT && !getAdjacentUnSunkTiles(tileLocations.get(player.getOccupiedTile())).contains(tile)) {
+
+        if (player.getRole() == Role.PILOT && !getAdjacentUnSunkTiles(location).contains(tile)) {
+            System.out.println("Pilot used ability");
             game.setPilotUsedAbility(true);
         }
 
@@ -151,7 +153,7 @@ public class Board {
                 break;
             case PILOT:
                 // if pilot hasnt used their ability or the pilot's tile sunk and is moving to another tile
-                if (!game.isPilotUsedAbility() || game.getGamePanel().getPlayerSunkTile().equals(player)) {
+                if (!game.isPilotUsedAbility() || (game.getGamePanel().getPlayerSunkTile() != null && game.getGamePanel().getPlayerSunkTile().equals(player))) {
                     availableTiles.addAll(getAllNonSunkTiles());
                 }
 
