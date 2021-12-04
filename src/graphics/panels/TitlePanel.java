@@ -76,6 +76,8 @@ public class TitlePanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 System.out.println("Pressed help");
+                new HelpPanel();
+                HelpPanel.setPreviousPanel("title");
                 RootPanel.switchPanel("help");
             }
         });

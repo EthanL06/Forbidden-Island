@@ -6,6 +6,7 @@ import game.enums.Action;
 import game.enums.Role;
 import game.enums.Special;
 import graphics.panels.GamePanel;
+import graphics.panels.HelpPanel;
 import graphics.panels.RootPanel;
 
 import javax.swing.*;
@@ -286,6 +287,11 @@ public class Listeners {
 
                     case "End Turn":
                         gp.endTurnPress();
+                        break;
+
+                    case "Help":
+                        HelpPanel.setPreviousPanel("game");
+                        RootPanel.switchPanel("help");
                         break;
                 }
             }
