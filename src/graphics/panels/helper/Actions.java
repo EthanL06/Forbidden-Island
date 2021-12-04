@@ -4,6 +4,7 @@ import game.ForbiddenIsland;
 import game.Player;
 import game.board.Tile;
 import game.cards.SpecialCard;
+import game.enums.Action;
 import game.enums.Role;
 import game.enums.Treasure;
 import game.enums.TreasureState;
@@ -40,7 +41,6 @@ public class Actions {
         }
 
         Tile selectedTile = gp.getSelectedTile();
-        HashMap<Tile, JLayeredPane> layeredPanes = gp.getLayeredPanes();
 
         if (selectedTile == null) {
             gp.updateActionLogError("Select a tile before moving!");
@@ -167,14 +167,17 @@ public class Actions {
                         return false;
                     }
 
+                    if (gp.getSelectedTile().getName().equals("Fools' Landing") && game.hasWon()) {
+
+                        gp.removeIcons(Action.SPECIAL);
+                        return true;
+                    }
+
                     gp.setGettingLandingSite(true);
                     gp.updateActionLogError("Select a tile to land on!");
                     gp.showHelicopterLiftIcons(gp.enableLandingTiles());
                     return false;
                 }
-
-                if (gp.getSelectedTile().getName().equals("Fools' Landing") && game.hasWon())
-                    return true;
 
                 if (gp.getLandingTile() == null) {
                     gp.updateActionLogError("Select a landing site!");

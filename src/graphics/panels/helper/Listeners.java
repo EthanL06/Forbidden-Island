@@ -1,6 +1,7 @@
 package graphics.panels.helper;
 
 import game.Player;
+import game.board.Tile;
 import game.cards.SpecialCard;
 import game.enums.Action;
 import game.enums.Role;
@@ -129,6 +130,8 @@ public class Listeners {
         else if (gp.getGame().getCurrentPlayer().getRole() == Role.NAVIGATOR) {
             gp.removeIcons();
             gp.enablePawns();
+            gp.disableTiles();
+            gp.setSelectedTile(null);
         }
 
         gp.setSelectedPlayer(null);
@@ -290,6 +293,10 @@ public class Listeners {
                         break;
 
                     case "Help":
+                        if (!HelpPanel.isInstantiated()) {
+                            new HelpPanel();
+                        }
+
                         HelpPanel.setPreviousPanel("game");
                         RootPanel.switchPanel("help");
                         break;

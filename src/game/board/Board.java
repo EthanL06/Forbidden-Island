@@ -1,5 +1,6 @@
 package game.board;
 
+import game.ForbiddenIsland;
 import game.Player;
 import game.Randomizer;
 import game.cards.FloodCard;
@@ -22,9 +23,12 @@ public class Board {
     private final HashMap<Tile, Location> tileLocations;
     private final HashMap<Player, Location> playerLocations;
 
-    public Board() {
+    private final ForbiddenIsland game;
+
+    public Board(ForbiddenIsland game) {
         System.err.println("Board initialized.");
         board = new Tile[6][6];
+        this.game = game;
 
         // Sets all empty tiles in each row
         Tile emptyTile = new Tile();
@@ -92,6 +96,10 @@ public class Board {
     public boolean movePlayer(Player player, Tile tile) {
         Location location = tileLocations.get(tile);
 
+        if (player.getRole() == Role.PILOT && !getAdjacentUnSunkTiles(tileLocations.get(player.getOccupiedTile())).contains(tile)) {
+            game.setPilotUsedAbility(true);
+        }
+
         player.setOccupiedTile(tile);
         playerLocations.replace(player, location);
 
@@ -142,7 +150,11 @@ public class Board {
                 availableTiles.addAll(getDiagonalUnSunkTiles(location));
                 break;
             case PILOT:
-                availableTiles.addAll(getAllNonSunkTiles());
+                // if pilot hasnt used their ability or the pilot's tile sunk and is moving to another tile
+                if (!game.isPilotUsedAbility() || game.getGamePanel().getPlayerSunkTile().equals(player)) {
+                    availableTiles.addAll(getAllNonSunkTiles());
+                }
+
                 break;
             case DIVER:
                 availableTiles.addAll(getDiverTiles(location.getRow(), location.getColumn(), location.getRow(), location.getColumn(), new HashSet<>()));

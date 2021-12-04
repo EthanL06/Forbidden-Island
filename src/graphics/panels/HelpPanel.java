@@ -16,8 +16,10 @@ public class HelpPanel extends JPanel implements ActionListener {
     private JButton close;
     private JButton next;
     private static String previousPanel = "";
+    private static boolean isInstantiated = false;
 
     public HelpPanel () {
+        isInstantiated = true;
         page = 1;
         setLayout(null);
         RootPanel.addPanel("help", this);
@@ -70,6 +72,10 @@ public class HelpPanel extends JPanel implements ActionListener {
 
     public static void setPreviousPanel(String panelName) {
         previousPanel = panelName;
+    }
+
+    public static boolean isInstantiated() {
+        return isInstantiated;
     }
 
     @Override

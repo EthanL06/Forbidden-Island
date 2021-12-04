@@ -14,6 +14,7 @@ import graphics.panels.helper.CardButton;
 import graphics.panels.helper.Listeners;
 import graphics.util.ButtonFactory;
 import graphics.util.ImageScaler;
+import org.w3c.dom.ls.LSOutput;
 
 import javax.swing.*;
 import java.util.*;
@@ -50,6 +51,7 @@ public class ForbiddenIsland implements Runnable {
     private int currentPlayerIndex;
     private boolean hasWon;
     private boolean hasLost;
+    private boolean pilotUsedAbility;
 
     private GamePanel gamePanel;
     private int actionsLeft;
@@ -66,6 +68,7 @@ public class ForbiddenIsland implements Runnable {
         this.floodCardsDrawn = 0;
         this.hasWon = false;
         this.hasLost = false;
+        this.pilotUsedAbility = false;
     }
 
     @Override
@@ -77,7 +80,7 @@ public class ForbiddenIsland implements Runnable {
         System.err.println("\n=== START OF GAME SET UP ===");
         Randomizer.setRandom(seed);
         players = new Player[numOfPlayers];
-        board = new Board();
+        board = new Board(this);
 
         floodDeck = new FloodDeck();
         treasureDeck = new TreasureDeck();
@@ -229,22 +232,28 @@ public class ForbiddenIsland implements Runnable {
     }
 
     public void nextPlayerTurn() {
+        System.out.println("Called next player turn");
+        System.out.println("cardsDrawn: " + cardsDrawn);
+        System.out.println("isDiscarding: " + gamePanel.isDiscardingCard());
+        System.out.println("Player discarding: " + gamePanel.getPlayerDiscarding());
+        System.out.println("floodCardsDrawn: " + floodCardsDrawn);
         gamePanel.updateActionLogError("");
 
         // if player needs to discard excess cards
-        if (!distributeTreasureCards()) {
-            return;
+        if (cardsDrawn < 2) {
+            if (!distributeTreasureCards()) {
+                return;
+            }
         }
-
-        cardsDrawn = 0;
 
         gamePanel.setDiscardingCard(false);
+        gamePanel.setPlayerDiscarding(null);
 
-        if (!drawFloodCards()) {
-            return;
+        if (floodCardsDrawn < waterLevel.getWaterLevel()) {
+            if (!drawFloodCards()) {
+                return;
+            }
         }
-
-        floodCardsDrawn = 0;
 
         if (hasLost()) {
             hasLost = true;
@@ -259,6 +268,10 @@ public class ForbiddenIsland implements Runnable {
             currentPlayerIndex++;
 
         currentPlayer = players[currentPlayerIndex];
+
+        cardsDrawn = 0;
+        floodCardsDrawn = 0;
+        gamePanel.setPlayerDiscarding(null);
     }
 
 
@@ -520,5 +533,17 @@ public class ForbiddenIsland implements Runnable {
 
     public void setFloodCardsDrawn(int floodCardsDrawn) {
         this.floodCardsDrawn = floodCardsDrawn;
+    }
+
+    public boolean isPilotUsedAbility() {
+        return pilotUsedAbility;
+    }
+
+    public void setPilotUsedAbility(boolean pilotUsedAbility) {
+        this.pilotUsedAbility = pilotUsedAbility;
+    }
+
+    public GamePanel getGamePanel() {
+        return gamePanel;
     }
 }

@@ -86,6 +86,7 @@ public class GamePanel extends JPanel {
     private Player selectedPlayer = null;
     private Object selectedCard = null;
     private boolean gameEnd = false;
+    private boolean endTurn = false;
 
     public GamePanel(ForbiddenIsland game) {
         this.game = game;
@@ -102,6 +103,8 @@ public class GamePanel extends JPanel {
 
         updateActionLog();
         disableTiles(); // Make all tiles disabled on start
+
+
     }
 
     // Called when player clicks confirm button
@@ -135,9 +138,12 @@ public class GamePanel extends JPanel {
                 break;
         }
 
-        if (game.hasWon()) {
-            gameWin();
-            return;
+        if (selectedAction == Action.SPECIAL) {
+            SpecialCard card = (SpecialCard) selectedCard;
+            if (card.getType() == Special.HELICOPTER_LIFT && game.hasWon()) {
+                gameWin();
+                return;
+            }
         }
 
         if (isDiscardingCard) {
@@ -163,18 +169,23 @@ public class GamePanel extends JPanel {
             updateDiscard();
 
             isDiscardingCard = false;
+            //playerDiscarding = null;
             System.out.println(game.getActionsLeft());
             updateHands();
 
             System.out.println("Cards drawn: " + game.getCardsDrawn());
             if (playerDiscarding == currentPlayer) {
-                if (game.getCardsDrawn() >= 2) {
-                    nextTurn();
-                } else {
-                    game.nextPlayerTurn();
-                    //discardExcessCard(playerDiscarding);
-                    return;
-                }
+//                if (game.getCardsDrawn() >= 2) {
+//                    nextTurn();
+//                } else {
+//                    game.nextPlayerTurn();
+//
+//                    if ()
+//                    //discardExcessCard(playerDiscarding);
+//                    return;
+//                }
+
+                nextTurn();
             }
 
             if (game.getHasLost())
@@ -185,19 +196,24 @@ public class GamePanel extends JPanel {
             if (!Actions.move())
                 return;
             updateActionLogCustom(playerSunkTile.getName() + " moved to " + selectedTile);
+            playerSunkTile = null;
         }
 
-        reset();
-
         // if player used up all actions
-        if (game.getActionsLeft() <= 0)
+        if (game.getActionsLeft() <= 0 || endTurn) {
+            System.out.println("yep");
             nextTurn();
+        }
 
         if (game.getHasLost())
             return;
 
         if (isDiscardingCard)
             return;
+
+        if (!endTurn) {
+            reset();
+        }
 
         try {
             ImageIcon indicator = ImageCreate.get("/images/misc/actions/actions_" + game.getActionsLeft() + ".png");
@@ -208,6 +224,7 @@ public class GamePanel extends JPanel {
     }
 
     private void reset() {
+        System.out.println("reset");
         if (game.getHasLost()) {
             gameLost();
             return;
@@ -230,6 +247,7 @@ public class GamePanel extends JPanel {
         isDiscardingCard = false;
         playerDiscarding = null;
         playerSunkTile = null;
+        endTurn = false;
         setGettingLandingSite(false);
         game.setCardsDrawn(0);
         game.setFloodCardsDrawn(0);
@@ -492,8 +510,11 @@ public class GamePanel extends JPanel {
     }
 
     public void endTurnPress() {
+        endTurn = true;
         updateActionLog("has ended their turn");
-        reset();
+
+        if (!isDiscardingCard && playerSunkTile == null)
+            reset();
 
         nextTurn();
     }
@@ -505,7 +526,7 @@ public class GamePanel extends JPanel {
         selectedAction = Action.NONE;
         updateWaterLevel();
 
-        game.nextPlayerTurn();
+        game.nextPlayerTurn(); // bug here
 
         if (game.getHasLost()) {
             gameLost();
@@ -515,11 +536,18 @@ public class GamePanel extends JPanel {
         updateHands();
         updateDiscard();
 
-        System.out.println(isDiscardingCard);
+        System.out.println("isDiscarding: " + isDiscardingCard);
         if (isDiscardingCard) {
+            disableActionButtons();
+            endTurnButton.setEnabled(false);
+
+            disableTiles();
+            enablePlayerCards(playerDiscarding);
             return;
         }
 
+        System.out.println("PLAYER SUNK TILE! " + playerSunkTile);
+        System.out.println(endTurn);
         if (playerSunkTile != null) {
             return;
         }
@@ -570,7 +598,7 @@ public class GamePanel extends JPanel {
     public void gameWin() {
         System.out.println("Game win!");
 
-        updateActionLogCustom("Congratulations! You have successfully escaped Forbidden Island\n\twith all four treasures!");
+        updateActionLogError("\n\tCongratulations! You have successfully escaped Forbidden Island\n\twith all four treasures!");
         updateActionLogCustom("Press the confirm button to play again");
         gameEnd();
     }
@@ -580,12 +608,14 @@ public class GamePanel extends JPanel {
         selectedAction = Action.NONE;
         playerDiscarding = player;
         updateActionLogCustom(player.getName() + "'s hand exceeded card limit. Select a card to discard");
-
+        System.out.println("endturn: " + endTurn);
+        System.out.println("disabling....");
         disableActionButtons();
         endTurnButton.setEnabled(false);
 
         disableTiles();
         enablePlayerCards(player);
+        System.out.println("disabled");
     }
 
     public boolean playerSunkTile(Player player) {
@@ -726,6 +756,7 @@ public class GamePanel extends JPanel {
     }
 
     public void disableActionButtons() {
+        System.out.println("disable action buttons");
         for (JButton button : actionButtons.values()) {
             String name = button.getName();
 
@@ -944,7 +975,8 @@ public class GamePanel extends JPanel {
     public void showMovementTiles(Player player) {
         HashSet<Tile> movementTiles;
 
-        if (player.getRole() == Role.NAVIGATOR) {
+        // If the current player is navigator and navigator is moving another player
+        if (currentPlayer.getRole() == Role.NAVIGATOR && player != currentPlayer) {
             movementTiles = game.getBoard().getNavigatorMovementTiles(player);
         } else {
             movementTiles = game.getBoard().getAvailableMovementTiles(player);
