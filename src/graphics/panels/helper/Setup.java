@@ -352,7 +352,13 @@ public class Setup {
 
         JLabel floodDiscardCard = new JLabel();
         floodDiscardCard.setBounds(floodDiscard.getX() + 4, floodDiscard.getY() + 5, 105, 138);
+
+        ImageIcon floodDiscardIcon = game.getFloodDeck().topOfDiscard().getImage();
+        floodDiscardCard.setIcon(ImageScaler.scale(floodDiscardIcon, floodDiscardCard.getWidth(), floodDiscardCard.getHeight()));
+
+        floodDiscardCard.setVisible(true);
         gp.add(floodDiscardCard);
+
 
         treasureDeck = new JLabel(ImageCreate.get("/images/cards/treasure/treasure_deck_back.jpg"));
 
@@ -366,6 +372,7 @@ public class Setup {
 
         JLabel treasureDiscardCard = new JLabel();
         treasureDiscardCard.setBounds(treasureDiscard.getX() + 4, treasureDiscard.getY() + 5, 105, 138);
+
         gp.add(treasureDiscardCard);
 
         gp.setDecks(floodDeck, floodDiscard, treasureDeck, treasureDiscard, floodDiscardCard, treasureDiscardCard);
