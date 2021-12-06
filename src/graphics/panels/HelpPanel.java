@@ -62,9 +62,12 @@ public class HelpPanel extends JPanel implements ActionListener {
         if (page == 1) {
             back.setVisible(false);
             next.setVisible(true);
-        } else if (page == 2) {
+        } else if (page == 3) {
             next.setVisible(false);
             back.setVisible(true);
+        } else {
+            back.setVisible(true);
+            next.setVisible(true);
         }
 
         repaint();

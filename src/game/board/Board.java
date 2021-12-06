@@ -94,16 +94,17 @@ public class Board {
     }
 
     public boolean movePlayer(Player player, Tile tile) {
-        Location location = tileLocations.get(tile);
-
-
-        if (player.getRole() == Role.PILOT && !getAdjacentUnSunkTiles(location).contains(tile)) {
-            System.out.println("Pilot used ability");
+        Location playerLocation = tileLocations.get(player.getOccupiedTile());
+        Location tileLocation = tileLocations.get(tile);
+//        System.out.println(tile);
+//        System.out.println(getAdjacentUnSunkTiles(location));
+        if (player.getRole() == Role.PILOT && !getAdjacentUnSunkTiles(playerLocation).contains(tile)) {
+            game.getGamePanel().updateActionLogError("Pilot used ability!");
             game.setPilotUsedAbility(true);
         }
 
         player.setOccupiedTile(tile);
-        playerLocations.replace(player, location);
+        playerLocations.replace(player, tileLocation);
 
         return true;
     }
